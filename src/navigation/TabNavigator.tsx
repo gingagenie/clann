@@ -40,7 +40,7 @@ export default function TabNavigator() {
         name="Home"
         component={HomeScreen}
         options={{
-          title: 'This Week',
+          headerShown: false, // HomeScreen has its own week-nav header
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
