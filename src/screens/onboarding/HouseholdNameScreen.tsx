@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigator';
-import { useWizard } from '../../navigation/OnboardingNavigator';
+import { useWizard } from '../../contexts/WizardContext';
 import OnboardingLayout from './OnboardingLayout';
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, 'HouseholdName'>;

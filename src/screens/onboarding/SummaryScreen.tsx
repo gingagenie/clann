@@ -8,7 +8,8 @@ import {
   Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { OnboardingStackParamList, useWizard, AgeBracket } from '../../navigation/OnboardingNavigator';
+import { OnboardingStackParamList } from '../../navigation/OnboardingNavigator';
+import { useWizard, AgeBracket } from '../../contexts/WizardContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useHousehold } from '../../contexts/HouseholdContext';
 import { supabase } from '../../lib/supabase';

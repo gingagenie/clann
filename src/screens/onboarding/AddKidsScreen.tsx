@@ -8,7 +8,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { OnboardingStackParamList, useWizard, Kid, AgeBracket } from '../../navigation/OnboardingNavigator';
+import { OnboardingStackParamList } from '../../navigation/OnboardingNavigator';
+import { useWizard, Kid, AgeBracket } from '../../contexts/WizardContext';
 import OnboardingLayout from './OnboardingLayout';
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, 'AddKids'>;

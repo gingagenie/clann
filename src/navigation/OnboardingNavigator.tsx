@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { WizardProvider } from '../contexts/WizardContext';
 
 import HouseholdNameScreen from '../screens/onboarding/HouseholdNameScreen';
 import AddAdultsScreen from '../screens/onboarding/AddAdultsScreen';
@@ -15,49 +16,11 @@ export type OnboardingStackParamList = {
   Summary: undefined;
 };
 
-export type AgeBracket = 'under5' | '5to12' | 'teen';
-
-export interface Kid {
-  name: string;
-  ageBracket: AgeBracket;
-}
-
-export interface WizardData {
-  householdName: string;
-  adultName: string;
-  kids: Kid[];
-  weekStartDay: 'monday' | 'sunday';
-}
-
-interface WizardContextValue {
-  data: WizardData;
-  set: (partial: Partial<WizardData>) => void;
-}
-
-const WizardContext = createContext<WizardContextValue | null>(null);
-
-export function useWizard(): WizardContextValue {
-  const ctx = useContext(WizardContext);
-  if (!ctx) throw new Error('useWizard must be used inside OnboardingNavigator');
-  return ctx;
-}
-
 const Stack = createNativeStackNavigator<OnboardingStackParamList>();
 
 export default function OnboardingNavigator() {
-  const [data, setData] = useState<WizardData>({
-    householdName: '',
-    adultName: '',
-    kids: [],
-    weekStartDay: 'monday',
-  });
-
-  function set(partial: Partial<WizardData>) {
-    setData(prev => ({ ...prev, ...partial }));
-  }
-
   return (
-    <WizardContext.Provider value={{ data, set }}>
+    <WizardProvider>
       <Stack.Navigator screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
         <Stack.Screen name="HouseholdName" component={HouseholdNameScreen} />
         <Stack.Screen name="AddAdults" component={AddAdultsScreen} />
@@ -65,6 +28,6 @@ export default function OnboardingNavigator() {
         <Stack.Screen name="WeekStart" component={WeekStartScreen} />
         <Stack.Screen name="Summary" component={SummaryScreen} />
       </Stack.Navigator>
-    </WizardContext.Provider>
+    </WizardProvider>
   );
 }
