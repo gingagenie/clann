@@ -25,33 +25,41 @@ interface HouseholdContextValue {
   household: Household | null;
   members: Member[];
   loading: boolean;
+  initialized: boolean; // true once the first fetch has completed
   refresh: () => Promise<void>;
 }
 
 const HouseholdContext = createContext<HouseholdContextValue | null>(null);
 
 export function HouseholdProvider({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!session?.user) {
       setHousehold(null);
       setMembers([]);
-      setLoading(false);
+      setInitialized(true);
       return;
     }
 
     setLoading(true);
     try {
-      // Find this user's member row to get their household_id
-      const { data: memberRow } = await supabase
+      const { data: memberRow, error: memberError } = await supabase
         .from('members')
         .select('household_id')
         .eq('auth_user_id', session.user.id)
         .maybeSingle();
+
+      if (memberError) {
+        console.warn('[Household] member query error:', memberError.message);
+        setHousehold(null);
+        setMembers([]);
+        return;
+      }
 
       if (!memberRow) {
         setHousehold(null);
@@ -59,22 +67,38 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const [{ data: hh }, { data: allMembers }] = await Promise.all([
+      const [{ data: hh, error: hhError }, { data: allMembers }] = await Promise.all([
         supabase.from('households').select('*').eq('id', memberRow.household_id).single(),
         supabase.from('members').select('*').eq('household_id', memberRow.household_id),
       ]);
 
+      if (hhError) {
+        console.warn('[Household] household query error:', hhError.message);
+        setHousehold(null);
+        setMembers([]);
+        return;
+      }
+
       setHousehold((hh as Household) ?? null);
       setMembers((allMembers as Member[]) ?? []);
+    } catch (err: any) {
+      console.error('[Household] unexpected error:', err?.message);
+      setHousehold(null);
+      setMembers([]);
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   }, [session?.user?.id]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  // Run refresh when auth is done loading and session state is known
+  useEffect(() => {
+    if (authLoading) return; // wait for auth before querying
+    refresh();
+  }, [authLoading, refresh]);
 
   return (
-    <HouseholdContext.Provider value={{ household, members, loading, refresh }}>
+    <HouseholdContext.Provider value={{ household, members, loading, initialized, refresh }}>
       {children}
     </HouseholdContext.Provider>
   );
