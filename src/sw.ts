@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching'
+import { NavigationRoute, registerRoute } from 'workbox-routing'
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>
@@ -7,6 +8,10 @@ declare const self: ServiceWorkerGlobalScope & {
 
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
+
+// SPA fallback — serve index.html for all navigation requests so
+// refreshing at /shopping, /meals etc. doesn't return a 404
+registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')))
 
 // ── Push notifications ──────────────────────────────────────────
 
