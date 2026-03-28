@@ -93,8 +93,15 @@ function AISearchBar({
 
     setSearching(false)
 
-    if (fnError || !data?.ingredients) {
-      setError('Could not find that recipe. Try a different name.')
+    if (fnError) {
+      console.error('[recipe-search] fn error:', fnError)
+      setError(`Error: ${fnError.message}`)
+      return
+    }
+
+    if (!data?.ingredients) {
+      console.error('[recipe-search] unexpected response:', data)
+      setError(data?.error ?? 'No ingredients returned. Try again.')
       return
     }
 

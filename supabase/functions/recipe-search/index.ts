@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
         max_tokens: 1024,
         messages: [{
           role: 'user',
-          content: `List the ingredients for "${meal}" for a family of 4. Return ONLY a valid JSON array, no other text. Format: [{"name":"ingredient","quantity":"amount"}]. Use Australian supermarket conventions (e.g. "capsicum" not "bell pepper", "coriander" not "cilantro"). Include realistic quantities.`,
+          content: `List the ingredients for "${meal}" for a family of 4. Return ONLY a valid JSON array, no other text. Format: [{"name":"ingredient","quantity":"amount"}]. Use Australian conventions: metric quantities (grams, ml, kg, L — not cups), Australian ingredient names (capsicum not bell pepper, coriander not cilantro, plain flour not all-purpose flour, tomato sauce not ketchup). Include realistic quantities.`,
         }],
       }),
     })
