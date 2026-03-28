@@ -17,16 +17,5 @@ CREATE POLICY "Users manage own push subscriptions"
   USING  (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
--- Scheduled dinner reminder at 7am UTC (5pm AEST) every day
--- Requires pg_cron and pg_net extensions (enabled in Supabase by default)
-SELECT cron.schedule(
-  'send-dinner-reminders',
-  '0 7 * * *',
-  $$
-  SELECT net.http_post(
-    url     := 'https://pdztoctoyptmfhzhndck.supabase.co/functions/v1/send-dinner-reminder',
-    headers := '{"Content-Type": "application/json"}'::jsonb,
-    body    := '{}'::jsonb
-  ) AS request_id;
-  $$
-);
+-- Schedule the dinner reminder via Supabase Dashboard:
+-- Edge Functions → send-dinner-reminder → Schedule → "0 7 * * *" (7am UTC = 5pm AEST)
