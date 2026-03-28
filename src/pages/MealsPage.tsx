@@ -127,13 +127,12 @@ interface MealSheetProps {
   date: Date | null
   meal: MealPlan | undefined
   recipes: Recipe[]
-  householdId: string
   onSave: (title: string, notes: string, recipeId: string | null, addToShopping: boolean, recipe: Recipe | null) => Promise<void>
   onDelete: () => Promise<void>
   onClose: () => void
 }
 
-function MealSheet({ date, meal, recipes, householdId, onSave, onDelete, onClose }: MealSheetProps) {
+function MealSheet({ date, meal, recipes, onSave, onDelete, onClose }: MealSheetProps) {
   const [title, setTitle]           = useState(meal?.title ?? '')
   const [notes, setNotes]           = useState(meal?.notes ?? '')
   const [recipeId, setRecipeId]     = useState<string | null>(meal?.recipe_id ?? null)
@@ -407,7 +406,6 @@ export default function MealsPage() {
           date={selectedDate}
           meal={activeMeal}
           recipes={recipes}
-          householdId={household?.id ?? ''}
           onSave={handleSave}
           onDelete={handleDelete}
           onClose={() => setSelectedDate(null)}
