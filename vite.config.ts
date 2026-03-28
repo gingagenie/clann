@@ -18,7 +18,7 @@ export default defineConfig({
         name: 'Clann',
         short_name: 'Clann',
         description: 'Family organiser — meals, tasks, and shopping in one place',
-        theme_color: '#2d6645',
+        theme_color: '#3a5c2e',
         background_color: '#faf8f3',
         display: 'standalone',
         orientation: 'portrait',
