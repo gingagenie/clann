@@ -38,6 +38,34 @@ export function useShoppingList() {
 
   useEffect(() => { refresh() }, [refresh])
 
+  // ── Realtime sync ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!household) return
+
+    const channel = supabase
+      .channel(`shopping-${household.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shopping_items', filter: `household_id=eq.${household.id}` },
+        payload => {
+          if (payload.eventType === 'INSERT') {
+            const item = payload.new as ShoppingItem
+            // Skip if already added optimistically (same id already in state)
+            setItems(prev => prev.some(i => i.id === item.id) ? prev : [...prev, item])
+          } else if (payload.eventType === 'UPDATE') {
+            const item = payload.new as ShoppingItem
+            setItems(prev => prev.map(i => i.id === item.id ? item : i))
+          } else if (payload.eventType === 'DELETE') {
+            const id = (payload.old as { id: string }).id
+            setItems(prev => prev.filter(i => i.id !== id))
+          }
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [household?.id])
+
   const addItem = useCallback(async (name: string, quantity?: string): Promise<string | null> => {
     if (!household) return 'No household'
 
