@@ -123,8 +123,14 @@
     }
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior: none;
     }
   html {
     @apply font-sans;
     }
+}
+
+/* Safe area utility for bottom nav on iOS */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
