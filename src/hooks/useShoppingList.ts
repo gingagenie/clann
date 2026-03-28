@@ -124,6 +124,16 @@ export function useShoppingList() {
     }
   }, [refresh])
 
+  const updateQuantity = useCallback(async (id: string, quantity: string | null): Promise<void> => {
+    const q = quantity?.trim() || null
+    setItems(prev => prev.map(item => item.id === id ? { ...item, quantity: q } : item))
+    const { error } = await supabase.from('shopping_items').update({ quantity: q }).eq('id', id)
+    if (error) {
+      console.warn('[useShoppingList] updateQuantity error:', error.message)
+      refresh()
+    }
+  }, [refresh])
+
   const clearChecked = useCallback(async (): Promise<void> => {
     if (!household) return
     const checkedIds = items.filter(i => i.checked).map(i => i.id)
@@ -143,5 +153,5 @@ export function useShoppingList() {
     }
   }, [household?.id, items, refresh])
 
-  return { items, loading, refresh, addItem, toggleItem, deleteItem, clearChecked }
+  return { items, loading, refresh, addItem, toggleItem, updateQuantity, deleteItem, clearChecked }
 }

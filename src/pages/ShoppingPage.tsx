@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { useShoppingList, type ShoppingItem } from '@/hooks/useShoppingList'
 import { CATEGORY_ORDER, CATEGORY_LABEL, type Category } from '@/lib/categorise'
 import { cn } from '@/lib/utils'
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export default function ShoppingPage() {
-  const { items, addItem, toggleItem, deleteItem, clearChecked } = useShoppingList()
+  const { items, addItem, toggleItem, updateQuantity, deleteItem, clearChecked } = useShoppingList()
   const [name, setName] = useState('')
   const [adding, setAdding] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -78,6 +78,7 @@ export default function ShoppingPage() {
                     item={item}
                     onToggle={() => toggleItem(item.id, true)}
                     onDelete={() => deleteItem(item.id)}
+                    onUpdateQuantity={q => updateQuantity(item.id, q)}
                   />
                 ))}
               </div>
@@ -103,6 +104,7 @@ export default function ShoppingPage() {
                     item={item}
                     onToggle={() => toggleItem(item.id, false)}
                     onDelete={() => deleteItem(item.id)}
+                    onUpdateQuantity={q => updateQuantity(item.id, q)}
                   />
                 ))}
               </>
@@ -122,9 +124,24 @@ interface ItemRowProps {
   item: ShoppingItem
   onToggle: () => void
   onDelete: () => void
+  onUpdateQuantity: (q: string | null) => void
 }
 
-function ItemRow({ item, onToggle, onDelete }: ItemRowProps) {
+function ItemRow({ item, onToggle, onDelete, onUpdateQuantity }: ItemRowProps) {
+  const [editingQty, setEditingQty] = useState(false)
+  const [qtyValue, setQtyValue]     = useState('')
+
+  const startEdit = useCallback(() => {
+    if (item.checked) return
+    setQtyValue(item.quantity ?? '')
+    setEditingQty(true)
+  }, [item.checked, item.quantity])
+
+  function commitEdit() {
+    onUpdateQuantity(qtyValue.trim() || null)
+    setEditingQty(false)
+  }
+
   return (
     <div className={cn(
       'flex items-center gap-3 rounded-2xl px-3 py-3 border transition-all',
@@ -148,22 +165,42 @@ function ItemRow({ item, onToggle, onDelete }: ItemRowProps) {
       </button>
 
       {/* Name + quantity */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex items-center gap-2">
         <span className={cn(
-          'text-sm font-medium',
+          'text-sm font-medium flex-1 min-w-0 truncate',
           item.checked ? 'line-through text-muted-foreground' : 'text-foreground',
         )}>
           {item.name}
         </span>
-        {item.quantity && (
-          <span className="text-xs text-muted-foreground ml-1.5">{item.quantity}</span>
+
+        {editingQty ? (
+          <input
+            autoFocus
+            value={qtyValue}
+            onChange={e => setQtyValue(e.target.value)}
+            onBlur={commitEdit}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitEdit() } if (e.key === 'Escape') setEditingQty(false) }}
+            className="w-20 text-xs text-right bg-muted rounded-lg px-2 py-1 border border-primary/40 outline-none"
+          />
+        ) : (
+          <button
+            onClick={startEdit}
+            className={cn(
+              'text-xs shrink-0 px-1.5 py-0.5 rounded-md transition-colors',
+              item.checked
+                ? 'text-muted-foreground/50 cursor-default'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+            )}
+          >
+            {item.quantity ?? <span className="text-muted-foreground/30">+ qty</span>}
+          </button>
         )}
       </div>
 
       {/* Delete */}
       <button
         onClick={onDelete}
-        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
       >
         <Trash2 size={14} />
       </button>

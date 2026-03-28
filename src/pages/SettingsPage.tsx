@@ -3,8 +3,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useHousehold } from '@/contexts/HouseholdContext'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { cn } from '@/lib/utils'
-import { Copy, Check, Bell, BellOff } from 'lucide-react'
+import { Copy, Check, Bell, BellOff, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 
 // ── Section card ───────────────────────────────────────────────
@@ -20,30 +21,51 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3.5">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium text-foreground text-right">{children}</span>
-    </div>
-  )
-}
-
 // ── Settings page ──────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const { user, signOut }                         = useAuth()
-  const { household, members }                    = useHousehold()
-  const { enabled, loading, supported, toggle }   = usePushNotifications()
-  const [copied, setCopied]                        = useState(false)
+  const { user, signOut }                       = useAuth()
+  const { household, members, updateHousehold } = useHousehold()
+  const { enabled, loading, supported, toggle } = usePushNotifications()
 
-  const joinCode = (household as (typeof household & { join_code?: string }) | null)?.join_code
+  const [copied, setCopied] = useState(false)
+
+  // Household name editing
+  const [editingName, setEditingName] = useState(false)
+  const [nameValue, setNameValue]     = useState('')
+  const [savingName, setSavingName]   = useState(false)
+
+  // Week start editing
+  const [savingWeek, setSavingWeek] = useState(false)
+
+  const joinCode = household?.join_code
 
   async function copyCode() {
     if (!joinCode) return
     await navigator.clipboard.writeText(joinCode)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  function startEditName() {
+    setNameValue(household?.name ?? '')
+    setEditingName(true)
+  }
+
+  async function saveName() {
+    const trimmed = nameValue.trim()
+    if (!trimmed || trimmed === household?.name) { setEditingName(false); return }
+    setSavingName(true)
+    await updateHousehold({ name: trimmed })
+    setSavingName(false)
+    setEditingName(false)
+  }
+
+  async function toggleWeekStart() {
+    if (!household) return
+    setSavingWeek(true)
+    await updateHousehold({ week_start_day: household.week_start_day === 'monday' ? 'sunday' : 'monday' })
+    setSavingWeek(false)
   }
 
   const adults = members.filter(m => m.role === 'adult')
@@ -62,8 +84,45 @@ export default function SettingsPage() {
 
         {/* Household */}
         <Section title="Household">
-          <Row label="Name">{household?.name}</Row>
-          <Row label="Week starts"><span className="capitalize">{household?.week_start_day}</span></Row>
+          {/* Name */}
+          <div className="flex items-center justify-between px-4 py-3.5 gap-3">
+            <span className="text-sm text-muted-foreground shrink-0">Name</span>
+            {editingName ? (
+              <div className="flex items-center gap-2 flex-1 justify-end">
+                <Input
+                  value={nameValue}
+                  onChange={e => setNameValue(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false) }}
+                  className="h-8 text-sm text-right w-40"
+                  autoFocus
+                />
+                <Button size="sm" className="h-8 px-3 text-xs" onClick={saveName} disabled={savingName}>
+                  {savingName ? '…' : 'Save'}
+                </Button>
+              </div>
+            ) : (
+              <button
+                onClick={startEditName}
+                className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                {household?.name}
+                <Pencil size={12} className="text-muted-foreground/60" />
+              </button>
+            )}
+          </div>
+
+          {/* Week start */}
+          <div className="flex items-center justify-between px-4 py-3.5">
+            <span className="text-sm text-muted-foreground">Week starts</span>
+            <button
+              onClick={toggleWeekStart}
+              disabled={savingWeek}
+              className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors disabled:opacity-50"
+            >
+              <span className="capitalize">{household?.week_start_day}</span>
+              <Pencil size={12} className="text-muted-foreground/60" />
+            </button>
+          </div>
         </Section>
 
         {/* Members */}
@@ -93,12 +152,12 @@ export default function SettingsPage() {
           ))}
         </Section>
 
-        {/* Partner join code */}
+        {/* Family join code */}
         {joinCode && (
-          <Section title="Partner join code">
+          <Section title="Family join code">
             <div className="px-4 py-4 space-y-3">
               <p className="text-sm text-muted-foreground">
-                Share this code with your partner so they can link their account.
+                Share this code with anyone in your family — partner, grandparents, whoever — so they can join and see the same meals, shopping list and tasks.
               </p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 bg-muted rounded-xl px-4 py-3 text-center">
@@ -128,11 +187,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
-              <Switch
-                checked={enabled}
-                onCheckedChange={toggle}
-                disabled={loading}
-              />
+              <Switch checked={enabled} onCheckedChange={toggle} disabled={loading} />
             </div>
           </Section>
         )}

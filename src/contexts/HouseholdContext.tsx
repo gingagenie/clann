@@ -28,6 +28,7 @@ interface HouseholdContextValue {
   loading: boolean
   initialized: boolean
   refresh: () => Promise<void>
+  updateHousehold: (updates: Partial<Pick<Household, 'name' | 'week_start_day'>>) => Promise<void>
 }
 
 const HouseholdContext = createContext<HouseholdContextValue | null>(null)
@@ -79,8 +80,14 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
     refresh()
   }, [authLoading, refresh])
 
+  const updateHousehold = useCallback(async (updates: Partial<Pick<Household, 'name' | 'week_start_day'>>) => {
+    if (!household) return
+    const { error } = await supabase.from('households').update(updates).eq('id', household.id)
+    if (!error) setHousehold(prev => prev ? { ...prev, ...updates } : null)
+  }, [household?.id])
+
   return (
-    <HouseholdContext.Provider value={{ household, members, loading, initialized, refresh }}>
+    <HouseholdContext.Provider value={{ household, members, loading, initialized, refresh, updateHousehold }}>
       {children}
     </HouseholdContext.Provider>
   )
