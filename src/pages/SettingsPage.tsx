@@ -1,14 +1,41 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useHousehold } from '@/contexts/HouseholdContext'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { cn } from '@/lib/utils'
+import { Copy, Check, Bell, BellOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Copy, Check } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+
+// ── Section card ───────────────────────────────────────────────
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="px-4 py-3 border-b border-border bg-muted/30">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{title}</p>
+      </div>
+      <div className="divide-y divide-border">{children}</div>
+    </div>
+  )
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3.5">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-foreground text-right">{children}</span>
+    </div>
+  )
+}
+
+// ── Settings page ──────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const { user, signOut } = useAuth()
-  const { household, members } = useHousehold()
-  const [copied, setCopied] = useState(false)
+  const { user, signOut }                         = useAuth()
+  const { household, members }                    = useHousehold()
+  const { enabled, loading, supported, toggle }   = usePushNotifications()
+  const [copied, setCopied]                        = useState(false)
 
   const joinCode = (household as (typeof household & { join_code?: string }) | null)?.join_code
 
@@ -23,83 +50,105 @@ export default function SettingsPage() {
   const kids   = members.filter(m => m.role === 'child')
 
   return (
-    <div className="p-4 space-y-4">
-      <h1 className="text-xl font-bold text-foreground pt-2">Settings</h1>
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="flex items-center px-4 h-14 max-w-lg mx-auto">
+          <p className="text-sm font-bold text-foreground">Settings</p>
+        </div>
+      </div>
 
-      {/* Household */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Household</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Name</span>
-            <span className="font-medium">{household?.name}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Week starts</span>
-            <span className="font-medium capitalize">{household?.week_start_day}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 max-w-lg mx-auto w-full">
 
-      {/* Members */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Members</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+        {/* Household */}
+        <Section title="Household">
+          <Row label="Name">{household?.name}</Row>
+          <Row label="Week starts"><span className="capitalize">{household?.week_start_day}</span></Row>
+        </Section>
+
+        {/* Members */}
+        <Section title="Members">
           {adults.map(m => (
-            <div key={m.id} className="flex items-center justify-between">
-              <span className="font-medium">{m.name}</span>
-              <span className="text-xs text-muted-foreground">
-                {m.auth_user_id ? (m.auth_user_id === user?.id ? 'You' : 'Linked') : 'Not yet joined'}
+            <div key={m.id} className="flex items-center justify-between px-4 py-3.5">
+              <span className="text-sm font-medium text-foreground">{m.name}</span>
+              <span className={cn(
+                'text-xs font-medium px-2 py-0.5 rounded-full',
+                m.auth_user_id
+                  ? m.auth_user_id === user?.id
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-accent text-accent-foreground'
+                  : 'bg-muted text-muted-foreground',
+              )}>
+                {m.auth_user_id ? (m.auth_user_id === user?.id ? 'You' : 'Linked') : 'Not joined'}
               </span>
             </div>
           ))}
           {kids.map(m => (
-            <div key={m.id} className="flex items-center justify-between">
-              <span className="font-medium">{m.name}</span>
-              <span className="text-xs text-muted-foreground">Child</span>
+            <div key={m.id} className="flex items-center justify-between px-4 py-3.5">
+              <span className="text-sm font-medium text-foreground">{m.name}</span>
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                Child
+              </span>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </Section>
 
-      {/* Join code */}
-      {joinCode && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Partner join code</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Share this code with your partner so they can link their account.
-            </p>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-muted rounded-lg px-4 py-3 text-center">
-                <span className="text-2xl font-bold tracking-[0.3em] text-foreground">{joinCode}</span>
+        {/* Partner join code */}
+        {joinCode && (
+          <Section title="Partner join code">
+            <div className="px-4 py-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Share this code with your partner so they can link their account.
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-muted rounded-xl px-4 py-3 text-center">
+                  <span className="text-2xl font-bold tracking-[0.3em] text-foreground">{joinCode}</span>
+                </div>
+                <Button variant="outline" size="icon" onClick={copyCode} className="rounded-xl shrink-0">
+                  {copied ? <Check size={16} className="text-primary" /> : <Copy size={16} />}
+                </Button>
               </div>
-              <Button variant="outline" size="icon" onClick={copyCode} className="shrink-0">
-                {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
-              </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </Section>
+        )}
 
-      {/* Account */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Account</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <p className="text-muted-foreground">{user?.email}</p>
-          <Button variant="outline" size="sm" onClick={signOut}>
-            Sign out
-          </Button>
-        </CardContent>
-      </Card>
+        {/* Notifications */}
+        {supported && (
+          <Section title="Notifications">
+            <div className="flex items-center justify-between px-4 py-3.5">
+              <div className="flex items-center gap-3">
+                {enabled
+                  ? <Bell size={18} className="text-primary shrink-0" />
+                  : <BellOff size={18} className="text-muted-foreground shrink-0" />
+                }
+                <div>
+                  <p className="text-sm font-medium text-foreground">Dinner reminders</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {enabled ? 'Daily at 5pm — tap to turn off' : 'Get a nudge at 5pm each day'}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={enabled}
+                onCheckedChange={toggle}
+                disabled={loading}
+              />
+            </div>
+          </Section>
+        )}
+
+        {/* Account */}
+        <Section title="Account">
+          <div className="px-4 py-3.5 space-y-3">
+            <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <Button variant="outline" size="sm" onClick={signOut} className="rounded-xl">
+              Sign out
+            </Button>
+          </div>
+        </Section>
+
+        <div className="h-4" />
+      </div>
     </div>
   )
 }

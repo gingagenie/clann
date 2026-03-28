@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { useShoppingList } from '@/hooks/useShoppingList'
+import { useShoppingList, type ShoppingItem } from '@/hooks/useShoppingList'
+import { CATEGORY_ORDER, CATEGORY_LABEL, type Category } from '@/lib/categorise'
 import { cn } from '@/lib/utils'
 import { Plus, Trash2, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,6 +14,11 @@ export default function ShoppingPage() {
 
   const unchecked = items.filter(i => !i.checked)
   const checked   = items.filter(i => i.checked)
+
+  // Group unchecked items by category, preserving CATEGORY_ORDER
+  const groups = CATEGORY_ORDER
+    .map(cat => ({ cat, items: unchecked.filter(i => i.category === cat) }))
+    .filter(g => g.items.length > 0)
 
   async function handleAdd() {
     const trimmed = name.trim()
@@ -56,17 +62,25 @@ export default function ShoppingPage() {
           </div>
         ) : (
           <div className="px-3 pt-3 space-y-1">
-            {/* Unchecked items */}
-            {unchecked.map(item => (
-              <ItemRow
-                key={item.id}
-                item={item}
-                onToggle={() => toggleItem(item.id, true)}
-                onDelete={() => deleteItem(item.id)}
-              />
+
+            {/* Grouped unchecked items */}
+            {groups.map(({ cat, items: groupItems }) => (
+              <div key={cat}>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1 pt-3 pb-1 first:pt-0">
+                  {CATEGORY_LABEL[cat as Category]}
+                </p>
+                {groupItems.map(item => (
+                  <ItemRow
+                    key={item.id}
+                    item={item}
+                    onToggle={() => toggleItem(item.id, true)}
+                    onDelete={() => deleteItem(item.id)}
+                  />
+                ))}
+              </div>
             ))}
 
-            {/* Checked section */}
+            {/* Checked / In the basket */}
             {checked.length > 0 && (
               <>
                 <div className="flex items-center justify-between pt-4 pb-1 px-1">
@@ -102,7 +116,7 @@ export default function ShoppingPage() {
 // ── Item row ────────────────────────────────────────────────────
 
 interface ItemRowProps {
-  item: { id: string; name: string; quantity: string | null; checked: boolean }
+  item: ShoppingItem
   onToggle: () => void
   onDelete: () => void
 }

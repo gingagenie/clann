@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useHousehold } from '@/contexts/HouseholdContext'
+import { categorise } from '@/lib/categorise'
 
 export interface ShoppingItem {
   id: string
   household_id: string
   name: string
   quantity: string | null
+  category: string
   checked: boolean
   checked_at: string | null
   created_at: string
@@ -45,6 +47,7 @@ export function useShoppingList() {
         household_id: household.id,
         name: name.trim(),
         quantity: quantity?.trim() || null,
+        category: categorise(name),
       })
       .select()
       .single()

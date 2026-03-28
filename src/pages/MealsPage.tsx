@@ -9,6 +9,7 @@ import {
 } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { mergeQuantity } from '@/lib/quantities'
+import { categorise } from '@/lib/categorise'
 import { ChevronLeft, ChevronRight, UtensilsCrossed, Pencil, Trash2, ShoppingCart, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -293,7 +294,7 @@ function MealSheet({ date, meal, recipes, onSave, onDelete, onClose }: MealSheet
                 Add ingredients to shopping list
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {selectedRecipe.ingredients.length} ingredient{selectedRecipe.ingredients.length !== 1 ? 's' : ''} · duplicates skipped
+                {selectedRecipe.ingredients.length} ingredient{selectedRecipe.ingredients.length !== 1 ? 's' : ''} · quantities merged if already on list
               </p>
             </div>
           </button>
@@ -385,7 +386,7 @@ export default function MealsPage() {
         )
       )
 
-      const toInsert: { household_id: string; name: string; quantity: string | null }[] = []
+      const toInsert: { household_id: string; name: string; quantity: string | null; category: string }[] = []
       const toUpdate: { id: string; quantity: string }[] = []
 
       for (const ing of recipe.ingredients) {
@@ -400,12 +401,14 @@ export default function MealsPage() {
             household_id: household.id,
             name: ing.name,
             quantity: ing.quantity ?? null,
+            category: categorise(ing.name),
           })
         }
       }
 
       if (toInsert.length > 0) {
-        await supabase.from('shopping_items').insert(toInsert)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await supabase.from('shopping_items').insert(toInsert as any)
       }
       for (const u of toUpdate) {
         await supabase.from('shopping_items').update({ quantity: u.quantity }).eq('id', u.id)
