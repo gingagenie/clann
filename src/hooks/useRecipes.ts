@@ -12,9 +12,10 @@ export interface RecipeIngredient {
 
 export interface Recipe {
   id: string
-  household_id: string
+  household_id: string | null
   title: string
   notes: string | null
+  is_starter: boolean
   created_at: string
   ingredients: RecipeIngredient[]
 }
@@ -37,7 +38,7 @@ export function useRecipes() {
       const { data, error } = await supabase
         .from('recipes')
         .select('*, recipe_ingredients(*)')
-        .eq('household_id', household.id)
+        .or(`household_id.eq.${household.id},is_starter.eq.true`)
         .order('created_at', { ascending: false })
         .order('sort_order', { referencedTable: 'recipe_ingredients', ascending: true })
 
@@ -62,7 +63,6 @@ export function useRecipes() {
     if (!household) return 'No household'
 
     if (existingId) {
-      // Update title + notes
       const { error: recipeErr } = await supabase
         .from('recipes')
         .update({ title: input.title.trim(), notes: input.notes.trim() || null })
@@ -70,7 +70,6 @@ export function useRecipes() {
 
       if (recipeErr) return recipeErr.message
 
-      // Replace all ingredients
       await supabase.from('recipe_ingredients').delete().eq('recipe_id', existingId)
 
       const toInsert = input.ingredients
@@ -87,7 +86,6 @@ export function useRecipes() {
         if (ingErr) return ingErr.message
       }
     } else {
-      // Insert recipe
       const { data: recipeData, error: recipeErr } = await supabase
         .from('recipes')
         .insert({ household_id: household.id, title: input.title.trim(), notes: input.notes.trim() || null })
@@ -118,7 +116,6 @@ export function useRecipes() {
   }, [household?.id, refresh])
 
   const deleteRecipe = useCallback(async (id: string): Promise<string | null> => {
-    // Ingredients cascade-delete via FK
     const { error } = await supabase.from('recipes').delete().eq('id', id)
     if (error) return error.message
     setRecipes(prev => prev.filter(r => r.id !== id))
