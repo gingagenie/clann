@@ -16,29 +16,67 @@ export const CATEGORY_LABEL: Record<Category, string> = {
 }
 
 export function categorise(name: string): Category {
-  const n = name.toLowerCase()
+  const n = name.toLowerCase().trim()
 
-  // Frozen first — "frozen peas" should be frozen, not produce
-  if (/\bfrozen\b/.test(n)) return 'frozen'
+  // Split into individual words for exact matching (avoids \b edge cases)
+  const wordSet = new Set(n.split(/[\s\-,/]+/).filter(Boolean))
+  const hasWord = (...words: string[]) => words.some(w => wordSet.has(w))
+  // Check for multi-word phrases
+  const hasPhrase = (...phrases: string[]) => phrases.some(p => n.includes(p))
 
-  // Drinks
-  if (/\b(juice|soft drink|soda|cola|lemonade|cordial|beer|wine|spirits?|coffee|tea|oat milk|almond milk|soy milk|mineral water|sparkling water)\b/.test(n)
-    || /^water$/.test(n)) return 'drinks'
+  // ── Frozen — check first so "frozen peas" → frozen, not produce
+  if (hasWord('frozen')) return 'frozen'
 
-  // Meat & seafood
-  if (/\b(chicken|beef|mince|pork|lamb|sausages?|bacon|ham|turkey|duck|steak|chops?|fillet|prawns?|salmon|tuna|fish|seafood|schnitzel|rissoles?|patties|patty|chorizo|pancetta|salami|rashers|snags|cutlets?)\b/.test(n)) return 'meat'
+  // ── Drinks
+  if (hasWord('beer', 'wine', 'spirits', 'juice', 'soda', 'cola', 'lemonade', 'cordial', 'coffee', 'tea')
+    || hasPhrase('soft drink', 'oat milk', 'almond milk', 'soy milk', 'mineral water', 'sparkling water')
+    || n === 'water') return 'drinks'
 
-  // Dairy & eggs
-  if (/\b(milk|cheese|butter|cream|yoghurt|yogurt|eggs?|sour cream|feta|parmesan|mozzarella|cheddar|brie|ricotta|mascarpone|custard|buttermilk)\b/.test(n)) return 'dairy'
+  // ── Meat & seafood
+  if (hasWord('chicken', 'beef', 'mince', 'pork', 'lamb', 'turkey', 'duck',
+              'bacon', 'ham', 'steak', 'salmon', 'tuna', 'prawns', 'prawn',
+              'seafood', 'schnitzel', 'chorizo', 'pancetta', 'salami', 'rashers', 'snags')
+    || hasPhrase('sausage', 'fish fillet', 'fish fillets', 'pork belly', 'lamb chop')) return 'meat'
 
-  // Bakery
-  if (/\b(bread|rolls?|buns?|wraps?|tortillas?|pita|loaf|sourdough|baguette|croissants?|muffins?|pastry|flatbread|mountain bread)\b/.test(n)) return 'bakery'
+  // ── Dairy & eggs
+  if (hasWord('milk', 'cheese', 'butter', 'yoghurt', 'yogurt', 'egg', 'eggs',
+              'parmesan', 'mozzarella', 'cheddar', 'feta', 'brie', 'ricotta',
+              'mascarpone', 'custard', 'buttermilk')
+    || hasPhrase('sour cream', 'cream cheese', 'thickened cream', 'double cream')) return 'dairy'
+  // "cream" alone (but not "coconut cream" which is pantry)
+  if (hasWord('cream') && !hasPhrase('coconut cream', 'ice cream')) return 'dairy'
 
-  // Pantry (check before produce to catch "tomato paste", "coconut cream" etc.)
-  if (/\b(pasta|rice|noodles?|flour|sugar|oil|vinegar|stock|broth|seasoning|soy sauce|oyster sauce|hoisin|curry paste|curry powder|cumin|paprika|oregano|thyme|rosemary|lentils?|chickpeas?|cereal|oats|honey|jam|vegemite|peanut butter|dried|packet|tinned|canned|pasta sauce|tomato paste|tomato sauce|coconut cream|coconut milk|taco|spice|herb mix|breadcrumbs|panko)\b/.test(n)) return 'pantry'
+  // ── Bakery
+  if (hasWord('bread', 'sourdough', 'baguette', 'croissant', 'flatbread', 'pita', 'pitta')
+    || hasPhrase('tortilla', 'pastry sheet', 'puff pastry', 'shortcrust', 'mountain bread', 'bread roll')
+    || (hasWord('pastry') && !hasPhrase('pastry sauce'))
+    || (hasWord('rolls') && !hasPhrase('spring rolls'))
+    || (hasWord('roll') && !hasPhrase('spring roll'))
+    || hasWord('wraps', 'wrap', 'bun', 'buns', 'muffin', 'muffins')) return 'bakery'
+  // Flour tortillas, corn tortillas
+  if (hasWord('tortillas', 'tortilla')) return 'bakery'
 
-  // Produce
-  if (/\b(apples?|bananas?|oranges?|lemons?|limes?|mangoes?|grapes?|strawberr|blueberr|raspberr|avocados?|tomatoes?|potatoes?|onions?|garlic|carrots?|broccoli|broccolini|lettuce|spinach|kale|zucchini|cucumber|capsicum|mushrooms?|celery|corn|peas?|beans?|cabbage|cauliflower|pumpkin|sweet potato|ginger|coriander|parsley|basil|mint|herbs?|salad|veggies?|vegetables?|fruit|leek|asparagus|bok choy|silverbeet|spring onions?|chilli|chili|fresh)\b/.test(n)) return 'produce'
+  // ── Pantry (check before produce to catch "tomato paste", "pasta sauce" etc.)
+  if (hasPhrase('pasta sauce', 'tomato paste', 'tomato sauce', 'coconut milk', 'coconut cream',
+                'soy sauce', 'oyster sauce', 'fish sauce', 'hoisin sauce', 'curry paste',
+                'stock cube', 'chicken stock', 'beef stock', 'vegetable stock')) return 'pantry'
+  if (hasWord('pasta', 'spaghetti', 'penne', 'fettuccine', 'linguine', 'rigatoni', 'fusilli',
+              'lasagne', 'rice', 'noodles', 'noodle', 'flour', 'sugar', 'oil', 'vinegar',
+              'stock', 'broth', 'seasoning', 'breadcrumbs', 'panko', 'taco', 'packet',
+              'tinned', 'canned', 'sauce', 'spice', 'cumin', 'paprika', 'oregano',
+              'thyme', 'rosemary', 'oats', 'cereal', 'honey', 'jam', 'vegemite',
+              'lentils', 'lentil', 'chickpeas', 'chickpea')) return 'pantry'
+
+  // ── Produce
+  if (hasPhrase('spring onion', 'spring onions', 'bok choy', 'sweet potato', 'sweet potatoes')) return 'produce'
+  if (hasWord('onion', 'onions', 'garlic', 'potato', 'potatoes', 'tomato', 'tomatoes',
+              'carrot', 'carrots', 'broccoli', 'broccolini', 'capsicum', 'cucumber',
+              'zucchini', 'mushroom', 'mushrooms', 'spinach', 'lettuce', 'avocado',
+              'avocados', 'ginger', 'lemon', 'lemons', 'lime', 'limes', 'apple',
+              'apples', 'banana', 'bananas', 'orange', 'oranges', 'mango', 'mangoes',
+              'pumpkin', 'cauliflower', 'asparagus', 'celery', 'corn', 'chilli',
+              'chili', 'parsley', 'coriander', 'basil', 'mint', 'peas', 'beans',
+              'leek', 'kale', 'cabbage', 'silverbeet', 'herbs')) return 'produce'
 
   return 'other'
 }
