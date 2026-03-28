@@ -11,6 +11,7 @@ export default function ShoppingPage() {
   const [name, setName] = useState('')
   const [adding, setAdding] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const addingRef = useRef(false) // prevents concurrent submits (Enter + button click)
 
   const unchecked = items.filter(i => !i.checked)
   const checked   = items.filter(i => i.checked)
@@ -22,11 +23,13 @@ export default function ShoppingPage() {
 
   async function handleAdd() {
     const trimmed = name.trim()
-    if (!trimmed) return
+    if (!trimmed || addingRef.current) return
+    addingRef.current = true
     setAdding(true)
     await addItem(trimmed)
     setName('')
     setAdding(false)
+    addingRef.current = false
     inputRef.current?.focus()
   }
 
