@@ -27,7 +27,7 @@ export default function ShoppingPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Add item bar */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border px-3 py-3 max-w-lg mx-auto w-full">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-3 py-3 max-w-lg mx-auto w-full">
         <div className="flex gap-2">
           <Input
             ref={inputRef}
@@ -110,8 +110,8 @@ interface ItemRowProps {
 function ItemRow({ item, onToggle, onDelete }: ItemRowProps) {
   return (
     <div className={cn(
-      'flex items-center gap-3 rounded-xl px-3 py-3 border transition-colors',
-      item.checked ? 'bg-muted/30 border-border/50' : 'bg-card border-border',
+      'flex items-center gap-3 rounded-2xl px-3 py-3 border transition-all',
+      item.checked ? 'bg-muted/30 border-border/50' : 'bg-card border-border shadow-sm',
     )}>
       {/* Checkbox */}
       <button

@@ -157,7 +157,7 @@ function RecipeCard({
   return (
     <button
       onClick={onTap}
-      className="flex w-full rounded-xl border border-border bg-card text-left transition-all active:scale-[0.99] hover:border-primary/40 overflow-hidden"
+      className="flex w-full rounded-2xl border border-border bg-card text-left shadow-sm transition-all active:scale-[0.99] hover:border-primary/30 hover:shadow-md overflow-hidden"
     >
       <div className="flex-1 px-4 py-3.5 min-w-0">
         <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ export default function RecipesPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center justify-between px-4 h-14 max-w-lg mx-auto">
           <p className="text-sm font-bold text-foreground">Recipes</p>
           <Button size="sm" onClick={() => setSheet({ type: 'new' })}>

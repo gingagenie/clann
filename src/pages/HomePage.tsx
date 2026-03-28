@@ -12,25 +12,27 @@ import { Button } from '@/components/ui/button'
 
 // ── Task row ───────────────────────────────────────────────────
 
-function TaskRow({ task, onToggle }: { task: WeekTask; onToggle: () => void }) {
+function TaskRow({ task, onToggle, isToday }: { task: WeekTask; onToggle: () => void; isToday: boolean }) {
   return (
     <button
       onClick={onToggle}
-      className="flex items-center gap-2.5 w-full text-left group py-0.5"
+      className="flex items-center gap-3 w-full text-left group py-0.5"
     >
       <span className={cn(
-        'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+        'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
         task.completed
-          ? 'bg-green-500 border-green-500'
-          : 'border-muted-foreground/40 group-hover:border-primary/60'
+          ? 'bg-primary border-primary'
+          : isToday
+            ? 'border-primary/40 group-hover:border-primary'
+            : 'border-border group-hover:border-primary/50',
       )}>
-        {task.completed && <Check size={11} strokeWidth={3} className="text-white" />}
+        {task.completed && <Check size={10} strokeWidth={3.5} className="text-primary-foreground" />}
       </span>
       <span className={cn(
-        'text-sm transition-colors',
+        'text-sm transition-colors leading-snug',
         task.completed
           ? 'line-through text-muted-foreground'
-          : 'text-foreground'
+          : isToday ? 'text-foreground font-medium' : 'text-foreground',
       )}>
         {task.name}
       </span>
@@ -49,51 +51,70 @@ interface DayCardProps {
 }
 
 function DayCard({ date, isToday, isPast, tasks, onToggleTask }: DayCardProps) {
-  return (
-    <div className={cn(
-      'flex rounded-xl border overflow-hidden transition-opacity',
-      isToday  ? 'border-primary border-[1.5px]' : 'border-border',
-      isPast   && 'opacity-55',
-    )}>
-      {/* Left date column */}
-      <div className={cn(
-        'w-16 shrink-0 flex flex-col items-center justify-center py-4 gap-0.5',
-        isToday ? 'bg-primary' : 'bg-muted/40 border-r border-border',
-      )}>
-        <span className={cn(
-          'text-[11px] font-semibold uppercase tracking-wide',
-          isToday ? 'text-primary-foreground/80' : 'text-muted-foreground',
-        )}>
-          {DAY_SHORT[date.getDay()]}
-        </span>
-        <span className={cn(
-          'text-2xl font-extrabold leading-none',
-          isToday ? 'text-primary-foreground' : 'text-foreground',
-        )}>
-          {date.getDate()}
-        </span>
-        {isToday && (
-          <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground/60 mt-1" />
-        )}
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 px-3.5 py-3 space-y-1.5 min-h-[72px]">
-        {isToday && (
-          <span className="text-[11px] font-bold text-primary uppercase tracking-wide block mb-2">
+  if (isToday) {
+    return (
+      <div className="rounded-2xl overflow-hidden shadow-md border border-primary/20 bg-card">
+        {/* Green header band */}
+        <div className="bg-primary px-4 py-3 flex items-center gap-3">
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-primary-foreground leading-none">
+              {date.getDate()}
+            </span>
+            <span className="text-sm font-bold text-primary-foreground/80 uppercase tracking-wider">
+              {DAY_SHORT[date.getDay()]}
+            </span>
+          </div>
+          <span className="ml-auto text-xs font-black text-primary-foreground/70 uppercase tracking-widest">
             Today
           </span>
-        )}
-        {tasks.length === 0
-          ? <span className="text-sm text-muted-foreground">No tasks</span>
-          : tasks.map(task => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                onToggle={() => onToggleTask(task.id, task.completed)}
-              />
-            ))
-        }
+        </div>
+        {/* Task body */}
+        <div className="px-4 py-3 space-y-2 min-h-[60px]">
+          {tasks.length === 0
+            ? <span className="text-sm text-muted-foreground">Nothing on — enjoy it 🌿</span>
+            : tasks.map(task => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  isToday
+                  onToggle={() => onToggleTask(task.id, task.completed)}
+                />
+              ))
+          }
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn(
+      'rounded-2xl overflow-hidden border border-border bg-card shadow-sm transition-opacity',
+      isPast && 'opacity-50',
+    )}>
+      <div className="flex">
+        {/* Date column */}
+        <div className="w-16 shrink-0 flex flex-col items-center justify-center py-4 gap-0.5 bg-muted/40 border-r border-border">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            {DAY_SHORT[date.getDay()]}
+          </span>
+          <span className="text-2xl font-black leading-none text-foreground">
+            {date.getDate()}
+          </span>
+        </div>
+        {/* Task body */}
+        <div className="flex-1 px-4 py-3 space-y-2 min-h-[64px]">
+          {tasks.length === 0
+            ? <span className="text-sm text-muted-foreground/60">No tasks</span>
+            : tasks.map(task => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  isToday={false}
+                  onToggle={() => onToggleTask(task.id, task.completed)}
+                />
+              ))
+          }
+        </div>
       </div>
     </div>
   )
@@ -118,7 +139,6 @@ export default function HomePage() {
 
   const { tasks, toggleComplete } = useWeekTasks(days)
 
-  // Scroll to today on current week
   useEffect(() => {
     if (!isCurrentWeek || !listRef.current) return
     const todayIndex = days.findIndex(d => isSameDay(d, today))
@@ -131,30 +151,29 @@ export default function HomePage() {
   }, [weekOffset])
 
   function tasksForDay(day: Date) {
-    const ds = toDateString(day)
-    return tasks.filter(t => t.due_date === ds)
+    return tasks.filter(t => t.due_date === toDateString(day))
   }
 
   return (
     <div className="flex flex-col h-full">
       {/* Week nav header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center px-2 h-14 max-w-lg mx-auto">
           <button
             onClick={() => setWeekOffset(o => o - 1)}
-            className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
-            <ChevronLeft size={20} />
+            <ChevronLeft size={20} strokeWidth={2.5} />
           </button>
 
           <div className="flex-1 text-center">
-            <p className="text-sm font-bold text-foreground leading-tight">
+            <p className="text-sm font-bold text-foreground tracking-tight">
               {formatWeekRange(weekStart, weekEnd)}
             </p>
             {!isCurrentWeek && (
               <button
                 onClick={() => setWeekOffset(0)}
-                className="text-xs text-primary hover:underline font-medium"
+                className="text-xs text-primary hover:underline font-semibold"
               >
                 Back to this week
               </button>
@@ -163,15 +182,15 @@ export default function HomePage() {
 
           <button
             onClick={() => setWeekOffset(o => o + 1)}
-            className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
-            <ChevronRight size={20} />
+            <ChevronRight size={20} strokeWidth={2.5} />
           </button>
         </div>
       </div>
 
       {/* Day cards */}
-      <div ref={listRef} className="flex-1 overflow-y-auto p-3 space-y-2 max-w-lg mx-auto w-full">
+      <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5 max-w-lg mx-auto w-full">
         {days.map(day => (
           <DayCard
             key={day.toISOString()}
@@ -182,20 +201,18 @@ export default function HomePage() {
             onToggleTask={toggleComplete}
           />
         ))}
-
-        {/* Bottom padding so last card clears the FAB */}
         <div className="h-4" />
       </div>
 
-      {/* Floating add button */}
+      {/* FAB */}
       <div className="fixed bottom-[4.5rem] right-4 z-20">
         <Button
           size="icon"
-          className="w-12 h-12 rounded-full shadow-lg"
+          className="w-13 h-13 rounded-full shadow-lg shadow-primary/30"
           onClick={() => navigate('/tasks/add')}
           aria-label="Add recurring task"
         >
-          <Plus size={22} />
+          <Plus size={22} strokeWidth={2.5} />
         </Button>
       </div>
     </div>

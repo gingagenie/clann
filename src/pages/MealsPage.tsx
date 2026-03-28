@@ -18,6 +18,28 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet'
 
+// ── Food emoji helper ──────────────────────────────────────────
+
+function mealEmoji(title: string): string {
+  const t = title.toLowerCase()
+  if (/pasta|spaghetti|lasagne|penne|mac.*cheese|linguine|fettuccine/.test(t)) return '🍝'
+  if (/pizza/.test(t)) return '🍕'
+  if (/burger/.test(t)) return '🍔'
+  if (/taco|fajita|nacho/.test(t)) return '🌮'
+  if (/curry|tikka|masala|butter chicken/.test(t)) return '🍛'
+  if (/soup/.test(t)) return '🍲'
+  if (/salad/.test(t)) return '🥗'
+  if (/salmon|prawn|fish|seafood|teriyaki/.test(t)) return '🐟'
+  if (/stir.fry|fried rice|noodle/.test(t)) return '🍜'
+  if (/roast|schnitzel|chop|lamb/.test(t)) return '🍖'
+  if (/chicken/.test(t)) return '🍗'
+  if (/beef|steak|mince/.test(t)) return '🥩'
+  if (/sausage|snag/.test(t)) return '🌭'
+  if (/egg|quiche/.test(t)) return '🥚'
+  if (/rice/.test(t)) return '🍚'
+  return '🍽️'
+}
+
 // ── Meal day card ──────────────────────────────────────────────
 
 interface MealCardProps {
@@ -29,57 +51,84 @@ interface MealCardProps {
 }
 
 function MealCard({ date, isToday, isPast, meal, onTap }: MealCardProps) {
+  if (isToday) {
+    return (
+      <button
+        onClick={onTap}
+        className="w-full rounded-2xl overflow-hidden text-left shadow-md border border-primary/20 bg-card active:scale-[0.99] transition-transform"
+      >
+        <div className="bg-primary px-4 py-3 flex items-center gap-3">
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-primary-foreground leading-none">
+              {date.getDate()}
+            </span>
+            <span className="text-sm font-bold text-primary-foreground/80 uppercase tracking-wider">
+              {DAY_SHORT[date.getDay()]}
+            </span>
+          </div>
+          <span className="ml-auto text-xs font-black text-primary-foreground/70 uppercase tracking-widest">
+            Tonight
+          </span>
+        </div>
+        <div className="px-4 py-3.5 flex items-center gap-3 min-h-[64px]">
+          {meal ? (
+            <>
+              <span className="text-2xl shrink-0">{mealEmoji(meal.title)}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-bold text-foreground truncate">{meal.title}</p>
+                {meal.notes && (
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{meal.notes}</p>
+                )}
+              </div>
+              <Pencil size={14} className="shrink-0 text-muted-foreground/40" />
+            </>
+          ) : (
+            <div className="flex items-center gap-2.5 text-muted-foreground">
+              <UtensilsCrossed size={18} className="shrink-0" />
+              <span className="text-sm font-medium">What's for dinner tonight?</span>
+            </div>
+          )}
+        </div>
+      </button>
+    )
+  }
+
   return (
     <button
       onClick={onTap}
       className={cn(
-        'flex w-full rounded-xl border overflow-hidden text-left transition-all active:scale-[0.99]',
-        isToday  ? 'border-primary border-[1.5px]' : 'border-border',
-        isPast   ? 'opacity-55' : 'hover:border-primary/40',
+        'flex w-full rounded-2xl border border-border bg-card overflow-hidden text-left shadow-sm transition-all active:scale-[0.99] hover:border-primary/30 hover:shadow-md',
+        isPast && 'opacity-50',
       )}
     >
       {/* Left date column */}
-      <div className={cn(
-        'w-16 shrink-0 flex flex-col items-center justify-center py-4 gap-0.5',
-        isToday ? 'bg-primary' : 'bg-muted/40 border-r border-border',
-      )}>
-        <span className={cn(
-          'text-[11px] font-semibold uppercase tracking-wide',
-          isToday ? 'text-primary-foreground/80' : 'text-muted-foreground',
-        )}>
+      <div className="w-16 shrink-0 flex flex-col items-center justify-center py-4 gap-0.5 bg-muted/40 border-r border-border">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
           {DAY_SHORT[date.getDay()]}
         </span>
-        <span className={cn(
-          'text-2xl font-extrabold leading-none',
-          isToday ? 'text-primary-foreground' : 'text-foreground',
-        )}>
+        <span className="text-2xl font-black leading-none text-foreground">
           {date.getDate()}
         </span>
-        {isToday && <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground/60 mt-1" />}
       </div>
 
       {/* Body */}
-      <div className="flex-1 px-3.5 py-3 flex items-center gap-3 min-h-[72px]">
+      <div className="flex-1 px-4 py-3 flex items-center gap-3 min-h-[72px]">
         {meal ? (
-          <div className="flex-1 min-w-0">
-            {isToday && (
-              <span className="text-[11px] font-bold text-primary uppercase tracking-wide block mb-1">
-                Tonight
-              </span>
-            )}
-            <p className="font-semibold text-foreground truncate">{meal.title}</p>
-            {meal.notes && (
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">{meal.notes}</p>
-            )}
-          </div>
+          <>
+            <span className="text-xl shrink-0">{mealEmoji(meal.title)}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-semibold text-foreground truncate">{meal.title}</p>
+              {meal.notes && (
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{meal.notes}</p>
+              )}
+            </div>
+            <Pencil size={13} className="shrink-0 text-muted-foreground/40" />
+          </>
         ) : (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <UtensilsCrossed size={16} className="shrink-0" />
-            <span className="text-sm">{isToday ? 'What\'s for dinner?' : 'Plan a meal'}</span>
+          <div className="flex items-center gap-2 text-muted-foreground/70">
+            <UtensilsCrossed size={15} className="shrink-0" />
+            <span className="text-sm">Plan a meal</span>
           </div>
-        )}
-        {meal && (
-          <Pencil size={14} className="shrink-0 text-muted-foreground/50" />
         )}
       </div>
     </button>
@@ -371,11 +420,11 @@ export default function MealsPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Week nav header */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center px-2 h-14 max-w-lg mx-auto">
           <button
             onClick={() => setWeekOffset(o => o - 1)}
-            className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <ChevronLeft size={20} />
           </button>
@@ -387,7 +436,7 @@ export default function MealsPage() {
             {!isCurrentWeek && (
               <button
                 onClick={() => setWeekOffset(0)}
-                className="text-xs text-primary hover:underline font-medium"
+                className="text-xs text-primary hover:underline font-semibold"
               >
                 This week
               </button>
@@ -396,7 +445,7 @@ export default function MealsPage() {
 
           <button
             onClick={() => setWeekOffset(o => o + 1)}
-            className="w-10 h-10 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <ChevronRight size={20} />
           </button>
