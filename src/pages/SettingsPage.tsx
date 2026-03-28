@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useHousehold } from '@/contexts/HouseholdContext'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { usePWAInstall } from '@/hooks/usePWAInstall'
 import { cn } from '@/lib/utils'
-import { Copy, Check, Bell, BellOff, Pencil } from 'lucide-react'
+import { Copy, Check, Bell, BellOff, Pencil, Download, Share } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -27,6 +28,7 @@ export default function SettingsPage() {
   const { user, signOut }                       = useAuth()
   const { household, members, updateHousehold } = useHousehold()
   const { enabled, loading, supported, toggle } = usePushNotifications()
+  const { canInstall, isIOSSafari, isInstalled, install } = usePWAInstall()
 
   const [copied, setCopied] = useState(false)
 
@@ -188,6 +190,46 @@ export default function SettingsPage() {
                 </div>
               </div>
               <Switch checked={enabled} onCheckedChange={toggle} disabled={loading} />
+            </div>
+          </Section>
+        )}
+
+        {/* Install app */}
+        {!isInstalled && canInstall && (
+          <Section title="Install app">
+            <div className="px-4 py-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Add Clann to your home screen for the full app experience — works offline too.
+              </p>
+              <Button onClick={install} className="w-full rounded-xl gap-2">
+                <Download size={16} />
+                Install Clann
+              </Button>
+            </div>
+          </Section>
+        )}
+
+        {/* iOS Safari manual install instructions */}
+        {!isInstalled && isIOSSafari && (
+          <Section title="Install app">
+            <div className="px-4 py-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Add Clann to your home screen for the full app experience.
+              </p>
+              <div className="rounded-xl bg-muted/50 border border-border px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2.5 text-sm text-foreground">
+                  <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0">1</span>
+                  <span>Tap the <Share size={14} className="inline mb-0.5" /> <strong>Share</strong> button in Safari</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm text-foreground">
+                  <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0">2</span>
+                  <span>Scroll down and tap <strong>Add to Home Screen</strong></span>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm text-foreground">
+                  <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0">3</span>
+                  <span>Tap <strong>Add</strong> — done!</span>
+                </div>
+              </div>
             </div>
           </Section>
         )}
