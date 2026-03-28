@@ -8,6 +8,7 @@ import {
   toDateString, formatWeekRange, DAY_SHORT, MONTHS,
 } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { mergeQuantity } from '@/lib/quantities'
 import { ChevronLeft, ChevronRight, UtensilsCrossed, Pencil, Trash2, ShoppingCart, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -321,27 +322,42 @@ export default function MealsPage() {
     await saveMeal(toDateString(selectedDate), title, notes, activeMeal?.id, recipeId)
 
     if (addToShopping && recipe && recipe.ingredients.length > 0) {
-      // Fetch existing unchecked items to dedup by name
       const { data: existing } = await supabase
         .from('shopping_items')
-        .select('name')
+        .select('id, name, quantity')
         .eq('household_id', household.id)
         .eq('checked', false)
 
-      const existingNames = new Set(
-        (existing ?? []).map((i: { name: string }) => i.name.toLowerCase())
+      const existingMap = new Map(
+        (existing ?? []).map((i: { id: string; name: string; quantity: string | null }) =>
+          [i.name.toLowerCase(), i]
+        )
       )
 
-      const toInsert = recipe.ingredients
-        .filter(ing => !existingNames.has(ing.name.toLowerCase()))
-        .map(ing => ({
-          household_id: household.id,
-          name: ing.name,
-          quantity: ing.quantity ?? null,
-        }))
+      const toInsert: { household_id: string; name: string; quantity: string | null }[] = []
+      const toUpdate: { id: string; quantity: string }[] = []
+
+      for (const ing of recipe.ingredients) {
+        const match = existingMap.get(ing.name.toLowerCase())
+        if (match) {
+          toUpdate.push({
+            id: match.id,
+            quantity: mergeQuantity(match.quantity, ing.quantity),
+          })
+        } else {
+          toInsert.push({
+            household_id: household.id,
+            name: ing.name,
+            quantity: ing.quantity ?? null,
+          })
+        }
+      }
 
       if (toInsert.length > 0) {
         await supabase.from('shopping_items').insert(toInsert)
+      }
+      for (const u of toUpdate) {
+        await supabase.from('shopping_items').update({ quantity: u.quantity }).eq('id', u.id)
       }
     }
   }
