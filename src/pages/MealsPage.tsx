@@ -148,11 +148,13 @@ function MealSheet({ date, meal, recipes, onSave, onDelete, onClose }: MealSheet
   const selectedRecipe = recipeId ? recipes.find(r => r.id === recipeId) ?? null : null
 
   function handleSelectRecipe(id: string | null) {
+    const prevRecipe = recipeId ? recipes.find(r => r.id === recipeId) : null
     setRecipeId(id)
     setAddedCount(null)
     if (id) {
       const r = recipes.find(rec => rec.id === id)
-      if (r && !title.trim()) setTitle(r.title)
+      const titleMatchesPrev = prevRecipe && title.trim().toLowerCase() === prevRecipe.title.toLowerCase()
+      if (r && (!title.trim() || titleMatchesPrev)) setTitle(r.title)
       if (r && r.ingredients.length > 0) setAddToShopping(true)
     } else {
       setAddToShopping(false)
@@ -419,6 +421,7 @@ export default function MealsPage() {
       {/* Edit sheet */}
       <Sheet open={!!selectedDate} onOpenChange={open => { if (!open) setSelectedDate(null) }}>
         <MealSheet
+          key={selectedDate?.toISOString() ?? ''}
           date={selectedDate}
           meal={activeMeal}
           recipes={recipes}
