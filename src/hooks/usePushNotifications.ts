@@ -1,49 +1,62 @@
 import { useCallback, useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
+import { useHousehold } from '@/contexts/HouseholdContext'
 
-const PREF_KEY    = 'clann_notifications_enabled'
-const REMINDED_PFX = 'clann_reminded_'
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+const REMINDED_PFX     = 'clann_reminded_'
 
-async function swShowNotification(title: string, opts: NotificationOptions) {
-  const reg = await navigator.serviceWorker.ready
-  return reg.showNotification(title, opts)
-}
-
-const DINNER_NOTIF: NotificationOptions = {
-  body:  "What's on the menu tonight?",
-  icon:  '/icons/icon-192.png',
-  badge: '/icons/icon-192.png',
-  data:  { url: '/meals' },
+function urlBase64ToUint8Array(base64: string): ArrayBuffer {
+  const padding = '='.repeat((4 - (base64.length % 4)) % 4)
+  const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const raw = atob(b64)
+  const arr = new Uint8Array(raw.length)
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
+  return arr.buffer
 }
 
 export function usePushNotifications() {
+  const { user }      = useAuth()
+  const { household } = useHousehold()
   const [enabled,   setEnabled]   = useState(false)
   const [loading,   setLoading]   = useState(false)
   const [supported, setSupported] = useState(false)
 
   useEffect(() => {
-    const ok = 'Notification' in window && 'serviceWorker' in navigator
+    const ok = typeof window !== 'undefined'
+      && 'serviceWorker' in navigator
+      && 'PushManager' in window
+      && 'Notification' in window
     setSupported(ok)
-    if (!ok) return
-    setEnabled(localStorage.getItem(PREF_KEY) === '1' && Notification.permission === 'granted')
-  }, [])
+    if (ok) void checkStatus()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
-  // ── Page-side 5pm reminder ──────────────────────────────────────
-  // Checks every minute while the app is in the foreground.
-  // Stores a per-day flag so it only fires once regardless of how
-  // long the app stays open around 5pm.
+  async function checkStatus() {
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      setEnabled(!!sub)
+    } catch { /* browser restriction */ }
+  }
+
+  // ── Foreground fallback: fire at 5pm if app is open ────────────
   useEffect(() => {
     if (!enabled) return
 
     async function checkTime() {
       const now = new Date()
       const key = REMINDED_PFX + now.toDateString()
-      if (localStorage.getItem(key)) return  // already fired today
-
-      const h = now.getHours()
-      const m = now.getMinutes()
-      if (h === 17 && m < 5) {
+      if (localStorage.getItem(key)) return
+      if (now.getHours() === 17 && now.getMinutes() < 5) {
         localStorage.setItem(key, '1')
-        await swShowNotification('Dinner time! 🍽️', DINNER_NOTIF)
+        const reg = await navigator.serviceWorker.ready
+        await reg.showNotification('Dinner time! 🍽️', {
+          body:  "What's on the menu tonight?",
+          icon:  '/icons/icon-192.png',
+          badge: '/icons/icon-192.png',
+          data:  { url: '/meals' },
+        })
       }
     }
 
@@ -55,27 +68,47 @@ export function usePushNotifications() {
   // ── Toggle ──────────────────────────────────────────────────────
 
   const toggle = useCallback(async () => {
+    if (!user || !household || !VAPID_PUBLIC_KEY) {
+      console.warn('[usePushNotifications] missing VAPID key or user/household')
+      return
+    }
     setLoading(true)
     try {
       if (enabled) {
-        localStorage.setItem(PREF_KEY, '0')
+        const reg = await navigator.serviceWorker.ready
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) {
+          await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+          await sub.unsubscribe()
+        }
         setEnabled(false)
       } else {
-        const perm = await Notification.requestPermission()
-        if (perm !== 'granted') return
-        localStorage.setItem(PREF_KEY, '1')
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') return
+
+        const reg = await navigator.serviceWorker.ready
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        })
+        const json = sub.toJSON()
+        await supabase.from('push_subscriptions').upsert({
+          household_id: household.id,
+          user_id:      user.id,
+          endpoint:     sub.endpoint,
+          p256dh:       json.keys!.p256dh,
+          auth:         json.keys!.auth,
+        }, { onConflict: 'user_id,endpoint' })
         setEnabled(true)
       }
     } catch (e) {
-      console.error('[usePushNotifications]', e)
+      console.error('[usePushNotifications] toggle error:', e)
     } finally {
       setLoading(false)
     }
-  }, [enabled])
+  }, [enabled, user, household])
 
-  // ── Test ────────────────────────────────────────────────────────
-  // Posts to the SW which keeps itself alive via event.waitUntil —
-  // reliable for up to ~5 minutes even when the app is backgrounded.
+  // ── Test via SW waitUntil ───────────────────────────────────────
 
   const scheduleTest = useCallback(async (minutes = 1) => {
     if (Notification.permission !== 'granted') {

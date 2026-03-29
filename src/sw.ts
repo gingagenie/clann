@@ -13,6 +13,24 @@ cleanupOutdatedCaches()
 // refreshing at /shopping, /meals etc. doesn't return a 404
 registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')))
 
+// ── Server push ────────────────────────────────────────────────
+// Fired by the Supabase Edge Function send-dinner-reminder at 5pm daily
+
+interface PushPayload { title: string; body: string; url?: string }
+
+self.addEventListener('push', event => {
+  if (!event.data) return
+  const data = event.data.json() as PushPayload
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body:  data.body,
+      icon:  '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data:  { url: data.url ?? '/meals' },
+    })
+  )
+})
+
 // ── Scheduled test notification ─────────────────────────────────
 //
 // The page posts { type: 'SCHEDULE_TEST', delayMs: number } to fire
