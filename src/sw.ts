@@ -68,7 +68,7 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   if ('TimestampTrigger' in (globalThis as Record<string, unknown>)) {
     const opts = {
       ...NOTIF_OPTS,
-      showTrigger: new (globalThis as Record<string, unknown> & { TimestampTrigger: new (t: number) => unknown }).TimestampTrigger(targetMs),
+      showTrigger: new (globalThis as unknown as { TimestampTrigger: new (t: number) => unknown }).TimestampTrigger(targetMs),
     }
     event.waitUntil(
       self.registration.showNotification(NOTIF_TITLE, opts as NotificationOptions)
