@@ -1,84 +1,75 @@
-import { useCallback, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/contexts/AuthContext'
-import { useHousehold } from '@/contexts/HouseholdContext'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+const PREF_KEY = 'clann_notifications_enabled'
 
-function urlBase64ToUint8Array(base64: string): ArrayBuffer {
-  const padding = '='.repeat((4 - (base64.length % 4)) % 4)
-  const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const raw = atob(b64)
-  const arr = new Uint8Array(raw.length)
-  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
-  return arr.buffer
+async function getSWRegistration() {
+  if (!('serviceWorker' in navigator)) return null
+  return navigator.serviceWorker.ready
+}
+
+async function postToSW(message: object) {
+  const reg = await getSWRegistration()
+  reg?.active?.postMessage(message)
 }
 
 export function usePushNotifications() {
-  const { user }      = useAuth()
-  const { household } = useHousehold()
   const [enabled,   setEnabled]   = useState(false)
   const [loading,   setLoading]   = useState(false)
   const [supported, setSupported] = useState(false)
+  const scheduledRef = useRef(false)
 
   useEffect(() => {
-    const ok = typeof window !== 'undefined'
-      && 'serviceWorker' in navigator
-      && 'PushManager' in window
-      && 'Notification' in window
+    const ok = 'Notification' in window && 'serviceWorker' in navigator
     setSupported(ok)
-    if (ok) checkStatus()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
+    if (!ok) return
 
-  async function checkStatus() {
-    try {
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.getSubscription()
-      setEnabled(!!sub)
-    } catch { /* browser restriction */ }
-  }
+    const pref       = localStorage.getItem(PREF_KEY)
+    const isEnabled  = pref === '1' && Notification.permission === 'granted'
+    setEnabled(isEnabled)
+
+    // Re-schedule on every app open so the SW timer stays fresh
+    if (isEnabled && !scheduledRef.current) {
+      scheduledRef.current = true
+      void postToSW({ type: 'SCHEDULE_REMINDER' })
+    }
+  }, [])
 
   const toggle = useCallback(async () => {
-    if (!user || !household || !VAPID_PUBLIC_KEY) return
     setLoading(true)
     try {
       if (enabled) {
-        // Unsubscribe
-        const reg = await navigator.serviceWorker.ready
-        const sub = await reg.pushManager.getSubscription()
-        if (sub) {
-          await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
-          await sub.unsubscribe()
-        }
+        localStorage.setItem(PREF_KEY, '0')
         setEnabled(false)
+        // Clear any pending triggered notifications
+        const reg = await getSWRegistration()
+        if (reg) {
+          const pending = await (reg as ServiceWorkerRegistration & {
+            getNotifications(opts?: { includeTriggered?: boolean }): Promise<Notification[]>
+          }).getNotifications({ includeTriggered: true })
+          pending.forEach(n => n.close())
+        }
       } else {
-        // Request permission
         const permission = await Notification.requestPermission()
         if (permission !== 'granted') return
-
-        // Subscribe
-        const reg = await navigator.serviceWorker.ready
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-        })
-        const json = sub.toJSON()
-        await supabase.from('push_subscriptions').upsert({
-          household_id: household.id,
-          user_id:      user.id,
-          endpoint:     sub.endpoint,
-          p256dh:       json.keys!.p256dh,
-          auth:         json.keys!.auth,
-        }, { onConflict: 'user_id,endpoint' })
+        localStorage.setItem(PREF_KEY, '1')
         setEnabled(true)
+        await postToSW({ type: 'SCHEDULE_REMINDER' })
       }
     } catch (e) {
-      console.error('[usePushNotifications] toggle error:', e)
+      console.error('[usePushNotifications]', e)
     } finally {
       setLoading(false)
     }
-  }, [enabled, user, household])
+  }, [enabled])
 
-  return { enabled, loading, supported, toggle }
+  // Exposed for testing — schedule a notification N minutes from now
+  const scheduleTest = useCallback(async (minutes = 1) => {
+    const permission = Notification.permission === 'granted'
+      ? 'granted'
+      : await Notification.requestPermission()
+    if (permission !== 'granted') return
+    await postToSW({ type: 'SCHEDULE_REMINDER', testMinutes: minutes })
+  }, [])
+
+  return { enabled, loading, supported, toggle, scheduleTest }
 }

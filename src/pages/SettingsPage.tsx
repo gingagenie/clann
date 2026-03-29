@@ -27,7 +27,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function SettingsPage() {
   const { user, signOut }                       = useAuth()
   const { household, members, updateHousehold } = useHousehold()
-  const { enabled, loading, supported, toggle } = usePushNotifications()
+  const { enabled, loading, supported, toggle, scheduleTest } = usePushNotifications()
   const { canInstall, isIOSSafari, isInstalled, install } = usePWAInstall()
 
   const [copied, setCopied] = useState(false)
@@ -191,6 +191,16 @@ export default function SettingsPage() {
               </div>
               <Switch checked={enabled} onCheckedChange={toggle} disabled={loading} />
             </div>
+            {enabled && (
+              <div className="px-4 pb-3">
+                <button
+                  onClick={() => scheduleTest(1)}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Send test notification in 1 min
+                </button>
+              </div>
+            )}
           </Section>
         )}
 
