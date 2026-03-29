@@ -1,38 +1,58 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-const PREF_KEY = 'clann_notifications_enabled'
+const PREF_KEY    = 'clann_notifications_enabled'
+const REMINDED_PFX = 'clann_reminded_'
 
-async function getSWRegistration() {
-  if (!('serviceWorker' in navigator)) return null
-  return navigator.serviceWorker.ready
+async function swShowNotification(title: string, opts: NotificationOptions) {
+  const reg = await navigator.serviceWorker.ready
+  return reg.showNotification(title, opts)
 }
 
-async function postToSW(message: object) {
-  const reg = await getSWRegistration()
-  reg?.active?.postMessage(message)
+const DINNER_NOTIF: NotificationOptions = {
+  body:  "What's on the menu tonight?",
+  icon:  '/icons/icon-192.png',
+  badge: '/icons/icon-192.png',
+  data:  { url: '/meals' },
 }
 
 export function usePushNotifications() {
   const [enabled,   setEnabled]   = useState(false)
   const [loading,   setLoading]   = useState(false)
   const [supported, setSupported] = useState(false)
-  const scheduledRef = useRef(false)
 
   useEffect(() => {
     const ok = 'Notification' in window && 'serviceWorker' in navigator
     setSupported(ok)
     if (!ok) return
-
-    const pref       = localStorage.getItem(PREF_KEY)
-    const isEnabled  = pref === '1' && Notification.permission === 'granted'
-    setEnabled(isEnabled)
-
-    // Re-schedule on every app open so the SW timer stays fresh
-    if (isEnabled && !scheduledRef.current) {
-      scheduledRef.current = true
-      void postToSW({ type: 'SCHEDULE_REMINDER' })
-    }
+    setEnabled(localStorage.getItem(PREF_KEY) === '1' && Notification.permission === 'granted')
   }, [])
+
+  // ── Page-side 5pm reminder ──────────────────────────────────────
+  // Checks every minute while the app is in the foreground.
+  // Stores a per-day flag so it only fires once regardless of how
+  // long the app stays open around 5pm.
+  useEffect(() => {
+    if (!enabled) return
+
+    async function checkTime() {
+      const now = new Date()
+      const key = REMINDED_PFX + now.toDateString()
+      if (localStorage.getItem(key)) return  // already fired today
+
+      const h = now.getHours()
+      const m = now.getMinutes()
+      if (h === 17 && m < 5) {
+        localStorage.setItem(key, '1')
+        await swShowNotification('Dinner time! 🍽️', DINNER_NOTIF)
+      }
+    }
+
+    void checkTime()
+    const id = setInterval(() => void checkTime(), 60_000)
+    return () => clearInterval(id)
+  }, [enabled])
+
+  // ── Toggle ──────────────────────────────────────────────────────
 
   const toggle = useCallback(async () => {
     setLoading(true)
@@ -40,20 +60,11 @@ export function usePushNotifications() {
       if (enabled) {
         localStorage.setItem(PREF_KEY, '0')
         setEnabled(false)
-        // Clear any pending triggered notifications
-        const reg = await getSWRegistration()
-        if (reg) {
-          const pending = await (reg as ServiceWorkerRegistration & {
-            getNotifications(opts?: { includeTriggered?: boolean }): Promise<Notification[]>
-          }).getNotifications({ includeTriggered: true })
-          pending.forEach(n => n.close())
-        }
       } else {
-        const permission = await Notification.requestPermission()
-        if (permission !== 'granted') return
+        const perm = await Notification.requestPermission()
+        if (perm !== 'granted') return
         localStorage.setItem(PREF_KEY, '1')
         setEnabled(true)
-        await postToSW({ type: 'SCHEDULE_REMINDER' })
       }
     } catch (e) {
       console.error('[usePushNotifications]', e)
@@ -62,13 +73,17 @@ export function usePushNotifications() {
     }
   }, [enabled])
 
-  // Exposed for testing — schedule a notification N minutes from now
+  // ── Test ────────────────────────────────────────────────────────
+  // Posts to the SW which keeps itself alive via event.waitUntil —
+  // reliable for up to ~5 minutes even when the app is backgrounded.
+
   const scheduleTest = useCallback(async (minutes = 1) => {
-    const permission = Notification.permission === 'granted'
-      ? 'granted'
-      : await Notification.requestPermission()
-    if (permission !== 'granted') return
-    await postToSW({ type: 'SCHEDULE_REMINDER', testMinutes: minutes })
+    if (Notification.permission !== 'granted') {
+      const perm = await Notification.requestPermission()
+      if (perm !== 'granted') return
+    }
+    const reg = await navigator.serviceWorker.ready
+    reg.active?.postMessage({ type: 'SCHEDULE_TEST', delayMs: minutes * 60_000 })
   }, [])
 
   return { enabled, loading, supported, toggle, scheduleTest }
