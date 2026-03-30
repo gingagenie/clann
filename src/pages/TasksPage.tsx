@@ -9,6 +9,8 @@ import {
 import { cn } from '@/lib/utils'
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import TaskEditSheet from '@/components/tasks/TaskEditSheet'
+import { getTermBannerForDate } from '@/lib/schoolTerms'
+import type { AustralianState } from '@/contexts/HouseholdContext'
 
 // ── Task row ───────────────────────────────────────────────────
 
@@ -69,6 +71,7 @@ function DayCard({ date, isToday, isPast, tasks, onToggleTask, onEditTask, onTap
   if (isToday) {
     return (
       <div
+        data-today="true"
         onClick={onTap}
         className="rounded-2xl overflow-hidden shadow-md border border-primary/20 bg-card cursor-pointer active:scale-[0.99] transition-transform"
       >
@@ -152,13 +155,14 @@ export default function TasksPage() {
   const isCurrentWeek = weekOffset === 0
 
   const { tasks, toggleComplete, refresh } = useWeekTasks(days)
+  const state = household?.state as AustralianState | null | undefined
 
   useEffect(() => {
     if (!isCurrentWeek || !listRef.current) return
-    const todayIndex = days.findIndex(d => isSameDay(d, today))
-    if (todayIndex > 0) {
+    const hasTodayCard = days.some(d => isSameDay(d, today))
+    if (hasTodayCard) {
       setTimeout(() => {
-        const card = listRef.current?.children[todayIndex] as HTMLElement
+        const card = listRef.current?.querySelector('[data-today="true"]') as HTMLElement
         card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }, 80)
     }
@@ -200,20 +204,36 @@ export default function TasksPage() {
       </div>
 
       {/* Day cards */}
-      <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5 max-w-lg mx-auto w-full">
-        {days.map(day => (
-          <DayCard
-            key={day.toISOString()}
-            date={day}
-            isToday={isSameDay(day, today)}
-            isPast={day < today && !isSameDay(day, today)}
-            tasks={tasksForDay(day)}
-            onToggleTask={toggleComplete}
-            onEditTask={setEditingTask}
-            onTap={() => navigate(`/tasks/add?date=${toDateString(day)}`)}
-          />
-        ))}
-        <div className="h-4" />
+      <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 max-w-lg mx-auto w-full">
+        <div className="space-y-2.5">
+          {days.map(day => {
+            const dateStr = toDateString(day)
+            const banner  = state ? getTermBannerForDate(state, dateStr) : null
+            return (
+              <div key={day.toISOString()}>
+                {banner && (
+                  <div className="flex items-center gap-2 pt-1 pb-0.5 px-1">
+                    <div className="h-px flex-1 bg-primary/20" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-primary px-2">
+                      {banner}
+                    </span>
+                    <div className="h-px flex-1 bg-primary/20" />
+                  </div>
+                )}
+                <DayCard
+                  date={day}
+                  isToday={isSameDay(day, today)}
+                  isPast={day < today && !isSameDay(day, today)}
+                  tasks={tasksForDay(day)}
+                  onToggleTask={toggleComplete}
+                  onEditTask={setEditingTask}
+                  onTap={() => navigate(`/tasks/add?date=${dateStr}`)}
+                />
+              </div>
+            )
+          })}
+          <div className="h-4" />
+        </div>
       </div>
 
       {/* Task edit bottom sheet */}

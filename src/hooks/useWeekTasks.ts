@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useHousehold } from '@/contexts/HouseholdContext'
 import { DAY_NAMES, toDateString } from '@/lib/dates'
+import { isSchoolHoliday } from '@/lib/schoolTerms'
+import type { AustralianState } from '@/contexts/HouseholdContext'
 
 export interface WeekTask {
   id: string
@@ -13,6 +15,7 @@ export interface WeekTask {
   completed_at: string | null
   name: string
   assigned_to: string | null
+  school_days_only: boolean
 }
 
 export function useWeekTasks(weekDays: Date[]) {
@@ -21,6 +24,7 @@ export function useWeekTasks(weekDays: Date[]) {
   const [loading, setLoading] = useState(false)
 
   const weekKey = weekDays.map(toDateString).join(',')
+  const state   = household?.state as AustralianState | null | undefined
 
   const refresh = useCallback(async () => {
     if (!household || weekDays.length === 0) return
@@ -45,31 +49,38 @@ export function useWeekTasks(weekDays: Date[]) {
         repeat?: string
         one_off_date?: string | null
         day_of_month?: number | null
+        school_days_only?: boolean
       }
+
+      // Helper: should this task appear on this date?
+      function shouldInclude(rt: RT, dateStr: string): boolean {
+        if (rt.school_days_only && state && isSchoolHoliday(state, dateStr)) return false
+        return true
+      }
+
       const expected = (recurring ?? []).flatMap((rt: RT) => {
         const rep = rt.repeat ?? 'weekly'
 
         if (rep === 'one_off' && rt.one_off_date) {
           const match = weekDays.find(d => toDateString(d) === rt.one_off_date)
-          return match
-            ? [{ recurring_task_id: rt.id, due_date: rt.one_off_date!, household_id: household.id }]
-            : []
+          if (!match || !shouldInclude(rt, rt.one_off_date!)) return []
+          return [{ recurring_task_id: rt.id, due_date: rt.one_off_date!, household_id: household.id }]
         }
 
         if (rep === 'monthly' && rt.day_of_month) {
           const match = weekDays.find(d => d.getDate() === rt.day_of_month)
-          return match
-            ? [{ recurring_task_id: rt.id, due_date: toDateString(match), household_id: household.id }]
-            : []
+          if (!match || !shouldInclude(rt, toDateString(match))) return []
+          return [{ recurring_task_id: rt.id, due_date: toDateString(match), household_id: household.id }]
         }
 
         // weekly (default)
         return weekDays
           .filter(day => rt.days_of_week.includes(DAY_NAMES[day.getDay()]))
+          .filter(day => shouldInclude(rt, toDateString(day)))
           .map(day => ({
             recurring_task_id: rt.id,
-            due_date: toDateString(day),
-            household_id: household.id,
+            due_date:          toDateString(day),
+            household_id:      household.id,
           }))
       })
 
@@ -83,13 +94,13 @@ export function useWeekTasks(weekDays: Date[]) {
         if (upsertErr) console.warn('[useWeekTasks] upsert error:', upsertErr.message)
       }
 
-      // Fetch week_tasks with joined name
+      // Fetch week_tasks with joined recurring_task fields
       const { data: rows, error: wtErr } = await supabase
         .from('week_tasks')
         .select(`
           id, household_id, recurring_task_id, due_date,
           completed, completed_by, completed_at,
-          recurring_tasks ( name, assigned_to )
+          recurring_tasks ( name, assigned_to, school_days_only )
         `)
         .eq('household_id', household.id)
         .gte('due_date', startDate)
@@ -97,22 +108,28 @@ export function useWeekTasks(weekDays: Date[]) {
 
       if (wtErr) { console.warn('[useWeekTasks] fetch error:', wtErr.message); return }
 
-      setTasks((rows ?? []).map((row: any) => ({
-        id:                 row.id,
-        household_id:       row.household_id,
-        recurring_task_id:  row.recurring_task_id,
-        due_date:           row.due_date,
-        completed:          row.completed,
-        completed_by:       row.completed_by,
-        completed_at:       row.completed_at,
-        name:               row.recurring_tasks?.name ?? '',
-        assigned_to:        row.recurring_tasks?.assigned_to ?? null,
-      })))
+      const mapped: WeekTask[] = (rows ?? []).map((row: any) => ({
+        id:               row.id,
+        household_id:     row.household_id,
+        recurring_task_id: row.recurring_task_id,
+        due_date:         row.due_date,
+        completed:        row.completed,
+        completed_by:     row.completed_by,
+        completed_at:     row.completed_at,
+        name:             row.recurring_tasks?.name ?? '',
+        assigned_to:      row.recurring_tasks?.assigned_to ?? null,
+        school_days_only: row.recurring_tasks?.school_days_only ?? false,
+      }))
+
+      // Filter out school_days_only tasks on holiday dates (handles stale DB rows)
+      setTasks(mapped.filter(t =>
+        !t.school_days_only || !state || !isSchoolHoliday(state, t.due_date)
+      ))
     } finally {
       setLoading(false)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [household?.id, weekKey])
+  }, [household?.id, household?.state, weekKey])
 
   useEffect(() => { refresh() }, [refresh])
 
@@ -136,7 +153,6 @@ export function useWeekTasks(weekDays: Date[]) {
 
     if (error || !data?.length) {
       console.warn('[useWeekTasks] toggle failed:', error?.message ?? 'no rows updated')
-      // Revert
       setTasks(prev => prev.map(t =>
         t.id === taskId ? { ...t, completed: currentlyCompleted, completed_at: null } : t
       ))

@@ -76,6 +76,7 @@ export default function TaskFormPage() {
   const [remHour,      setRemHour]      = useState('08')
   const [remMinute,    setRemMinute]    = useState('00')
   const [advance,      setAdvance]      = useState<AdvanceType>('same_day')
+  const [schoolDaysOnly, setSchoolDaysOnly] = useState(false)
   const [saving,       setSaving]       = useState(false)
   const [deleting,     setDeleting]     = useState(false)
   const [error,        setError]        = useState<string | null>(null)
@@ -96,6 +97,7 @@ export default function TaskFormPage() {
         setDayOfMonth(data.day_of_month ?? null)
         setOneOffDate(data.one_off_date ?? '')
         setAssignedTo(data.assigned_to ?? null)
+        setSchoolDaysOnly(data.school_days_only ?? false)
         setReminder(data.reminder_enabled ?? false)
         if (data.reminder_time) {
           const [h, m] = (data.reminder_time as string).split(':')
@@ -141,6 +143,7 @@ export default function TaskFormPage() {
       day_of_month:     repeat === 'monthly' ? dayOfMonth   : null,
       one_off_date:     repeat === 'one_off' ? oneOffDate   : null,
       assigned_to:      assignedTo,
+      school_days_only: schoolDaysOnly,
       reminder_enabled: reminder,
       reminder_time:    reminderTime,
       reminder_advance: reminder ? advance : null,
@@ -312,6 +315,15 @@ export default function TaskFormPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* School days only */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>School days only</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Skips this task during school holidays</p>
+          </div>
+          <Switch checked={schoolDaysOnly} onCheckedChange={setSchoolDaysOnly} />
         </div>
 
         {/* Reminder */}

@@ -9,6 +9,8 @@ import {
   toDateString, DAY_SHORT, MONTHS,
 } from '@/lib/dates'
 import { CalendarDays, UtensilsCrossed, ListTodo, ShoppingCart } from 'lucide-react'
+import { getTermStatus } from '@/lib/schoolTerms'
+import type { AustralianState } from '@/contexts/HouseholdContext'
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -72,6 +74,9 @@ export default function HomePage() {
 
   const todayStr   = toDateString(today)
   const todayTasks = tasks.filter(t => t.due_date === todayStr)
+  const termStatus = household?.state
+    ? getTermStatus(household.state as AustralianState, todayStr)
+    : null
   const todayDone  = todayTasks.filter(t => t.completed).length
   const todayMeal  = meals.find(m => m.date === todayStr) ?? null
 
@@ -120,6 +125,11 @@ export default function HomePage() {
                       ? `${todayTasks.length} done ✓`
                       : `${todayDone}/${todayTasks.length} done`}
                 </p>
+                {termStatus && (
+                  <p className="text-xs font-bold mt-1.5" style={{ color: '#3a5c2e' }}>
+                    {termStatus.inTerm ? `Term ${termStatus.termNumber}` : '🏖️ School holidays'}
+                  </p>
+                )}
               </div>
             </div>
           </button>
