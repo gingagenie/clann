@@ -4,10 +4,11 @@ import { useHousehold, type AustralianState } from '@/contexts/HouseholdContext'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { usePWAInstall } from '@/hooks/usePWAInstall'
 import { cn } from '@/lib/utils'
-import { Copy, Check, Bell, BellOff, Pencil, Download, Share } from 'lucide-react'
+import { Copy, Check, Bell, BellOff, Pencil, Download, Share, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { supabase } from '@/lib/supabase'
 
 // ── Section card ───────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function SettingsPage() {
   const { user, signOut }                       = useAuth()
-  const { household, members, updateHousehold } = useHousehold()
+  const { household, members, updateHousehold, refresh } = useHousehold()
   const { enabled, loading, supported, toggle, scheduleTest } = usePushNotifications()
   const { canInstall, isIOSSafari, isInstalled, install } = usePWAInstall()
 
@@ -42,6 +43,13 @@ export default function SettingsPage() {
 
   // State editing
   const [savingState, setSavingState] = useState(false)
+
+  // Add member
+  const [addingMember,    setAddingMember]    = useState(false)
+  const [newMemberName,   setNewMemberName]   = useState('')
+  const [newMemberRole,   setNewMemberRole]   = useState<'adult' | 'child'>('adult')
+  const [savingMember,    setSavingMember]    = useState(false)
+  const [deletingMember,  setDeletingMember]  = useState<string | null>(null)
 
   const joinCode = household?.join_code
 
@@ -78,6 +86,31 @@ export default function SettingsPage() {
     setSavingWeek(true)
     await updateHousehold({ week_start_day: household.week_start_day === 'monday' ? 'sunday' : 'monday' })
     setSavingWeek(false)
+  }
+
+  async function handleAddMember() {
+    const name = newMemberName.trim()
+    if (!name || !household) return
+    setSavingMember(true)
+    await supabase.from('members').insert({
+      household_id: household.id,
+      name,
+      role: newMemberRole,
+      portion_multiplier: 1,
+      is_primary: false,
+    })
+    setSavingMember(false)
+    setAddingMember(false)
+    setNewMemberName('')
+    setNewMemberRole('adult')
+    refresh()
+  }
+
+  async function handleDeleteMember(id: string) {
+    setDeletingMember(id)
+    await supabase.from('members').delete().eq('id', id)
+    setDeletingMember(null)
+    refresh()
   }
 
   const adults = members.filter(m => m.role === 'adult')
@@ -163,26 +196,89 @@ export default function SettingsPage() {
           {adults.map(m => (
             <div key={m.id} className="flex items-center justify-between px-4 py-3.5">
               <span className="text-sm font-medium text-foreground">{m.name}</span>
-              <span className={cn(
-                'text-xs font-medium px-2 py-0.5 rounded-full',
-                m.auth_user_id
-                  ? m.auth_user_id === user?.id
-                    ? 'bg-primary/10 text-primary'
-                    : 'bg-accent text-accent-foreground'
-                  : 'bg-muted text-muted-foreground',
-              )}>
-                {m.auth_user_id ? (m.auth_user_id === user?.id ? 'You' : 'Linked') : 'Not joined'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'text-xs font-medium px-2 py-0.5 rounded-full',
+                  m.auth_user_id
+                    ? m.auth_user_id === user?.id
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-accent text-accent-foreground'
+                    : 'bg-muted text-muted-foreground',
+                )}>
+                  {m.auth_user_id ? (m.auth_user_id === user?.id ? 'You' : 'Linked') : 'Adult'}
+                </span>
+                {!m.is_primary && m.auth_user_id !== user?.id && (
+                  <button
+                    onClick={() => void handleDeleteMember(m.id)}
+                    disabled={deletingMember === m.id}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           {kids.map(m => (
             <div key={m.id} className="flex items-center justify-between px-4 py-3.5">
               <span className="text-sm font-medium text-foreground">{m.name}</span>
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                Child
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                  Child
+                </span>
+                <button
+                  onClick={() => void handleDeleteMember(m.id)}
+                  disabled={deletingMember === m.id}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
+
+          {/* Add member form */}
+          {addingMember ? (
+            <div className="px-4 py-3 space-y-3">
+              <Input
+                placeholder="Name"
+                value={newMemberName}
+                onChange={e => setNewMemberName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') void handleAddMember(); if (e.key === 'Escape') setAddingMember(false) }}
+                autoFocus
+              />
+              <div className="flex gap-2">
+                {(['adult', 'child'] as const).map(role => (
+                  <button
+                    key={role}
+                    onClick={() => setNewMemberRole(role)}
+                    className={cn(
+                      'flex-1 py-2 rounded-xl border text-sm font-medium transition-colors capitalize',
+                      newMemberRole === role
+                        ? 'bg-primary border-primary text-primary-foreground'
+                        : 'border-border text-muted-foreground',
+                    )}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setAddingMember(false)}>Cancel</Button>
+                <Button className="flex-1" onClick={() => void handleAddMember()} disabled={savingMember || !newMemberName.trim()}>
+                  {savingMember ? '…' : 'Add'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setAddingMember(true)}
+              className="flex items-center gap-2 w-full px-4 py-3.5 text-sm text-primary font-medium hover:bg-muted/50 transition-colors"
+            >
+              <Plus size={16} />
+              Add member
+            </button>
+          )}
         </Section>
 
         {/* Family join code */}
