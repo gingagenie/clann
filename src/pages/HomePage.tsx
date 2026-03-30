@@ -13,6 +13,89 @@ import { getTermStatus } from '@/lib/schoolTerms'
 import type { AustralianState } from '@/contexts/HouseholdContext'
 import { MONTHS } from '@/lib/dates'
 
+// ── Daily quote ──────────────────────────────────────────────────
+
+const QUOTES = [
+  "Chaos is just family with the volume up.",
+  "You're doing better than you think.",
+  "Even superheroes need a good dinner.",
+  "The laundry can wait. You can't.",
+  "Today's forecast: mostly family, chance of chaos.",
+  "Small moments make the biggest memories.",
+  "Nobody has it all figured out. Nobody.",
+  "A tidy house is a sign of a boring family.",
+  "You showed up. That already counts.",
+  "Home is wherever these people are.",
+  "Rest is not a reward. It's a requirement.",
+  "Kids grow up fast. Dishes can wait.",
+  "Imperfect and trying — that's the whole job.",
+  "Feed the people you love. Often.",
+  "The best things in life are inconveniently loud.",
+  "You are someone's favourite person.",
+  "Good enough is usually good enough.",
+  "Dinner together beats almost everything else.",
+  "The mental load is real. So is your strength.",
+  "Someday they'll remember how safe this felt.",
+  "Be the calm in your own chaos.",
+  "You don't need to earn rest.",
+  "Laughter is basically a free superpower.",
+  "It's okay if today was just surviving.",
+  "Mess means living. Clean means guests.",
+  "Every family has a plot twist or two.",
+  "Love isn't loud. It's just always there.",
+  "The refrigerator is not going to fill itself.",
+  "Your best looks different every day. That's fine.",
+  "Slow down. Nobody's giving out medals for rushing.",
+  "Being present beats being perfect, every time.",
+  "The hard days are part of the good life.",
+  "Someone in this house thinks you hung the moon.",
+  "Strong coffee and a kind heart. That's the plan.",
+  "Grace for yourself, today especially.",
+  "You're raising humans. That's genuinely remarkable.",
+  "Every day won't be great. Some will be magic.",
+  "Ask for help. It's not a weakness, it's a skill.",
+  "The kids will be fine. You'll be fine. Probably.",
+  "Run your own race. Everyone else is winging it too.",
+  "Pack the lunch. Show up. That's enough.",
+  "Family dinners are the original group chat.",
+  "It's a good day to have a good day.",
+  "You don't have to be extraordinary. Just here.",
+  "Even the hard parts are worth something.",
+  "The people who matter don't mind the mess.",
+  "Routine is just love in disguise.",
+  "Take the long way home sometimes.",
+  "Not every problem needs solving today.",
+  "You're holding a lot. It's okay to put some down.",
+  "The nights are long but the years are short.",
+  "Nothing cures a bad day like a good meal.",
+  "Kindness is always the right call.",
+  "The house can be loud and still be full of love.",
+  "Keep going. You're further along than you think.",
+  "Worry less. Hug more.",
+  "Every family is a little bit weird. Yours is fine.",
+  "The best parent is a present one.",
+  "Today: one step, one meal, one moment at a time.",
+  "You matter more to these people than you know.",
+  "Life is better with people who get you.",
+  "Perfection is overrated. Connection isn't.",
+  "Breathe. Make coffee. Begin again.",
+  "Your family's lucky to have you in their corner.",
+  "Some days call for extra snacks and lower expectations.",
+  "The chaos will pass. The love won't.",
+  "Progress, not perfection. Every single day.",
+  "Tired doesn't mean failing. It means trying.",
+  "Take five minutes just for you today.",
+  "Home is where everyone knows your name and your order.",
+]
+
+function getDailyQuote(dateStr: string): string {
+  // Day-of-year so it's consistent for all users on the same date
+  const d = new Date(dateStr + 'T00:00:00Z')
+  const start = new Date(Date.UTC(d.getUTCFullYear(), 0, 0))
+  const dayOfYear = Math.floor((d.getTime() - start.getTime()) / 86400000)
+  return QUOTES[dayOfYear % QUOTES.length]
+}
+
 // ── School card helpers ──────────────────────────────────────────
 
 function daysUntil(targetDateStr: string, todayStr: string): number {
@@ -117,7 +200,7 @@ export default function HomePage() {
           <p className="text-3xl font-bold text-foreground leading-tight">
             {timeGreeting(now.getHours())}{firstName ? `, ${firstName}` : ''} 👋
           </p>
-          <p className="text-sm text-muted-foreground mt-1">Here's your day at a glance</p>
+          <p className="text-sm text-muted-foreground mt-1 italic">{getDailyQuote(todayStr)}</p>
         </div>
 
         {/* 2 × 2 grid */}
