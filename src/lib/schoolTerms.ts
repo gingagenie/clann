@@ -8,11 +8,12 @@ export interface SchoolTerm {
 }
 
 export interface TermStatus {
-  inTerm:     boolean
-  termNumber: number | null   // 1–4 if in term, null if in holidays
-  /** First day of the NEXT upcoming term or holiday period (for banner logic) */
-  nextPeriodStart: string | null
-  nextPeriodLabel: string | null  // e.g. "Term 2 starts" | "School holidays"
+  inTerm:          boolean
+  termNumber:      number | null   // 1–4 if in term, null if in holidays
+  currentTermEnd:  string | null   // YYYY-MM-DD last day of current term (if inTerm)
+  nextPeriodStart: string | null   // YYYY-MM-DD first day of next term or first holiday day
+  nextPeriodLabel: string | null   // e.g. "Term 2 starts" | "School holidays"
+  nextTermNumber:  number | null   // which term is coming next
 }
 
 /** Return the term list for a given state + year, or null if not available. */
@@ -46,15 +47,16 @@ export function getTermStatus(state: AustralianState, dateStr: string): TermStat
   const currentTerm = terms.find(t => dateStr >= t.start && dateStr <= t.end) ?? null
 
   if (currentTerm) {
-    // In a term — find the next holiday start (day after term ends)
-    const termEnd    = currentTerm.end
-    const nextDay    = offsetDate(termEnd, 1)
-    const nextTerm   = terms.find(t => t.start > termEnd)
+    // In a term — holidays begin the day AFTER the term end date
+    const termEnd  = currentTerm.end
+    const nextTerm = terms.find(t => t.start > termEnd)
     return {
       inTerm:          true,
       termNumber:      currentTerm.term,
-      nextPeriodStart: nextDay,
-      nextPeriodLabel: nextTerm ? `School holidays` : null,
+      currentTermEnd:  termEnd,
+      nextPeriodStart: offsetDate(termEnd, 1),
+      nextPeriodLabel: nextTerm ? 'School holidays' : null,
+      nextTermNumber:  nextTerm?.term ?? null,
     }
   }
 
@@ -63,8 +65,10 @@ export function getTermStatus(state: AustralianState, dateStr: string): TermStat
   return {
     inTerm:          false,
     termNumber:      null,
+    currentTermEnd:  null,
     nextPeriodStart: nextTerm?.start ?? null,
     nextPeriodLabel: nextTerm ? `Term ${nextTerm.term} starts` : null,
+    nextTermNumber:  nextTerm?.term ?? null,
   }
 }
 

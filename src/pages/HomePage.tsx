@@ -6,11 +6,32 @@ import { useMealPlans } from '@/hooks/useMealPlans'
 import { useShoppingList } from '@/hooks/useShoppingList'
 import {
   startOfDay, addDays, getWeekStart,
-  toDateString, DAY_SHORT, MONTHS,
+  toDateString, DAY_SHORT,
 } from '@/lib/dates'
-import { CalendarDays, UtensilsCrossed, ListTodo, ShoppingCart } from 'lucide-react'
+import { CalendarDays, UtensilsCrossed, ListTodo, ShoppingCart, GraduationCap } from 'lucide-react'
 import { getTermStatus } from '@/lib/schoolTerms'
 import type { AustralianState } from '@/contexts/HouseholdContext'
+import { MONTHS } from '@/lib/dates'
+
+// ── School card helpers ──────────────────────────────────────────
+
+function daysUntil(targetDateStr: string, todayStr: string): number {
+  const target = new Date(targetDateStr + 'T00:00:00Z').getTime()
+  const today  = new Date(todayStr    + 'T00:00:00Z').getTime()
+  return Math.round((target - today) / 86400000)
+}
+
+function shortDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00Z')
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`
+}
+
+function countdown(days: number, context: 'end' | 'start'): string {
+  if (days <= 0) return context === 'end' ? 'Last day! 🎉' : 'Starts today!'
+  if (days === 1) return context === 'end' ? '1 day to go' : 'Tomorrow!'
+  if (days <= 14) return `${days} days to go`
+  return `${Math.floor(days / 7)} weeks to go`
+}
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -125,11 +146,6 @@ export default function HomePage() {
                       ? `${todayTasks.length} done ✓`
                       : `${todayDone}/${todayTasks.length} done`}
                 </p>
-                {termStatus && (
-                  <p className="text-xs font-bold mt-1.5" style={{ color: '#3a5c2e' }}>
-                    {termStatus.inTerm ? `Term ${termStatus.termNumber}` : '🏖️ School holidays'}
-                  </p>
-                )}
               </div>
             </div>
           </button>
@@ -223,6 +239,82 @@ export default function HomePage() {
             </div>
           </button>
 
+        </div>
+
+        {/* ── School card (full width) ── */}
+        <div className="mt-3">
+          <button
+            onClick={() => navigate('/settings')}
+            className="w-full rounded-2xl overflow-hidden active:scale-[0.97] transition-transform text-left"
+            style={{ background: '#f5f0e8', border: '3px solid #3a5c2e' }}
+          >
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <GraduationCap size={16} style={{ color: '#3a5c2e' }} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#3a5c2e' }}>
+                    School
+                  </span>
+                </div>
+                {household?.state && (
+                  <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ color: '#3a5c2e', background: '#3a5c2e18' }}>
+                    {household.state}
+                  </span>
+                )}
+              </div>
+
+              {!household?.state ? (
+                // No state set
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🏫</span>
+                  <div>
+                    <p className="text-sm font-bold text-black">Set your school state</p>
+                    <p className="text-xs text-black/50 mt-0.5">Tap to go to Settings and pick your state</p>
+                  </div>
+                </div>
+              ) : termStatus?.inTerm ? (
+                // In term
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-black text-black leading-none">Term {termStatus.termNumber}</p>
+                    <p className="text-xs text-black/50 mt-1">
+                      Ends {shortDate(termStatus.currentTermEnd!)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold" style={{ color: '#3a5c2e' }}>
+                      {countdown(daysUntil(termStatus.currentTermEnd!, todayStr), 'end')}
+                    </p>
+                    {termStatus.nextTermNumber && (
+                      <p className="text-xs text-black/40 mt-0.5">
+                        then holidays
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                // In holidays
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-black text-black leading-none">🏖️ Holidays</p>
+                    {termStatus?.nextPeriodStart && (
+                      <p className="text-xs text-black/50 mt-1">
+                        Term {termStatus.nextTermNumber} starts {shortDate(termStatus.nextPeriodStart)}
+                      </p>
+                    )}
+                  </div>
+                  {termStatus?.nextPeriodStart && (
+                    <div className="text-right">
+                      <p className="text-sm font-bold" style={{ color: '#3a5c2e' }}>
+                        {countdown(daysUntil(termStatus.nextPeriodStart, todayStr), 'start')}
+                      </p>
+                      <p className="text-xs text-black/40 mt-0.5">until school</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </button>
         </div>
 
         <div className="h-8" />
