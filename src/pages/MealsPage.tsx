@@ -10,34 +10,34 @@ import {
 import { cn } from '@/lib/utils'
 import { mergeQuantity } from '@/lib/quantities'
 import { categorise } from '@/lib/categorise'
-import { ChevronLeft, ChevronRight, UtensilsCrossed, Pencil, Trash2, ShoppingCart, Check } from 'lucide-react'
+import {
+  ChevronLeft, ChevronRight, UtensilsCrossed, Pencil,
+  Trash2, ShoppingCart, Check, ArrowLeft, Search,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle,
-} from '@/components/ui/sheet'
 
 // ── Food emoji helper ──────────────────────────────────────────
 
 function mealEmoji(title: string): string {
   const t = title.toLowerCase()
   if (/pasta|spaghetti|lasagne|penne|mac.*cheese|linguine|fettuccine/.test(t)) return '🍝'
-  if (/pizza/.test(t)) return '🍕'
-  if (/burger/.test(t)) return '🍔'
-  if (/taco|fajita|nacho/.test(t)) return '🌮'
-  if (/curry|tikka|masala|butter chicken/.test(t)) return '🍛'
-  if (/soup/.test(t)) return '🍲'
-  if (/salad/.test(t)) return '🥗'
-  if (/salmon|prawn|fish|seafood|teriyaki/.test(t)) return '🐟'
-  if (/stir.fry|fried rice|noodle/.test(t)) return '🍜'
-  if (/roast|schnitzel|chop|lamb/.test(t)) return '🍖'
-  if (/chicken/.test(t)) return '🍗'
-  if (/beef|steak|mince/.test(t)) return '🥩'
-  if (/sausage|snag/.test(t)) return '🌭'
-  if (/egg|quiche/.test(t)) return '🥚'
-  if (/rice/.test(t)) return '🍚'
+  if (/pizza/.test(t))                                                          return '🍕'
+  if (/burger/.test(t))                                                         return '🍔'
+  if (/taco|fajita|nacho/.test(t))                                              return '🌮'
+  if (/curry|tikka|masala|butter chicken/.test(t))                              return '🍛'
+  if (/soup/.test(t))                                                           return '🍲'
+  if (/salad/.test(t))                                                          return '🥗'
+  if (/salmon|prawn|fish|seafood|teriyaki/.test(t))                             return '🐟'
+  if (/stir.fry|fried rice|noodle/.test(t))                                     return '🍜'
+  if (/roast|schnitzel|chop|lamb/.test(t))                                      return '🍖'
+  if (/chicken/.test(t))                                                        return '🍗'
+  if (/beef|steak|mince/.test(t))                                               return '🥩'
+  if (/sausage|snag/.test(t))                                                   return '🌭'
+  if (/egg|quiche/.test(t))                                                     return '🥚'
+  if (/rice/.test(t))                                                           return '🍚'
   return '🍽️'
 }
 
@@ -60,16 +60,12 @@ function MealCard({ date, isToday, isPast, meal, onTap }: MealCardProps) {
       >
         <div className="bg-primary px-4 py-3 flex items-center gap-3">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-primary-foreground leading-none">
-              {date.getDate()}
-            </span>
+            <span className="text-3xl font-black text-primary-foreground leading-none">{date.getDate()}</span>
             <span className="text-sm font-bold text-primary-foreground/80 uppercase tracking-wider">
               {DAY_SHORT[date.getDay()]}
             </span>
           </div>
-          <span className="ml-auto text-xs font-black text-primary-foreground/70 uppercase tracking-widest">
-            Tonight
-          </span>
+          <span className="ml-auto text-xs font-black text-primary-foreground/70 uppercase tracking-widest">Tonight</span>
         </div>
         <div className="px-4 py-3.5 flex items-center gap-3 min-h-[64px]">
           {meal ? (
@@ -77,9 +73,7 @@ function MealCard({ date, isToday, isPast, meal, onTap }: MealCardProps) {
               <span className="text-2xl shrink-0">{mealEmoji(meal.title)}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-bold text-foreground truncate">{meal.title}</p>
-                {meal.notes && (
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{meal.notes}</p>
-                )}
+                {meal.notes && <p className="text-xs text-muted-foreground mt-0.5 truncate">{meal.notes}</p>}
               </div>
               <Pencil size={14} className="shrink-0 text-muted-foreground/40" />
             </>
@@ -102,26 +96,19 @@ function MealCard({ date, isToday, isPast, meal, onTap }: MealCardProps) {
         isPast && 'opacity-50',
       )}
     >
-      {/* Left date column */}
       <div className="w-16 shrink-0 flex flex-col items-center justify-center py-4 gap-0.5 bg-muted/40 border-r border-border">
         <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
           {DAY_SHORT[date.getDay()]}
         </span>
-        <span className="text-2xl font-black leading-none text-foreground">
-          {date.getDate()}
-        </span>
+        <span className="text-2xl font-black leading-none text-foreground">{date.getDate()}</span>
       </div>
-
-      {/* Body */}
       <div className="flex-1 px-4 py-3 flex items-center gap-3 min-h-[72px]">
         {meal ? (
           <>
             <span className="text-xl shrink-0">{mealEmoji(meal.title)}</span>
             <div className="flex-1 min-w-0">
               <p className="text-base font-semibold text-foreground truncate">{meal.title}</p>
-              {meal.notes && (
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{meal.notes}</p>
-              )}
+              {meal.notes && <p className="text-xs text-muted-foreground mt-0.5 truncate">{meal.notes}</p>}
             </div>
             <Pencil size={13} className="shrink-0 text-muted-foreground/40" />
           </>
@@ -136,46 +123,12 @@ function MealCard({ date, isToday, isPast, meal, onTap }: MealCardProps) {
   )
 }
 
-// ── Recipe picker ──────────────────────────────────────────────
+// ── Full-screen meal picker ────────────────────────────────────
 
-function RecipePicker({
-  recipes,
-  selectedId,
-  onSelect,
-}: {
-  recipes: Recipe[]
-  selectedId: string | null
-  onSelect: (id: string | null) => void
-}) {
-  if (recipes.length === 0) return null
+type PickerMode = 'choice' | 'recipe-list' | 'edit'
 
-  return (
-    <div className="space-y-1.5">
-      <Label>Use a recipe <span className="text-muted-foreground font-normal">(optional)</span></Label>
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {recipes.map(r => (
-          <button
-            key={r.id}
-            onClick={() => onSelect(selectedId === r.id ? null : r.id)}
-            className={cn(
-              'shrink-0 rounded-full px-3 py-1.5 text-sm font-medium border transition-colors',
-              selectedId === r.id
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-muted/50 text-foreground border-border hover:border-primary/50',
-            )}
-          >
-            {r.title}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Meal edit sheet ────────────────────────────────────────────
-
-interface MealSheetProps {
-  date: Date | null
+interface MealPickerProps {
+  date: Date
   meal: MealPlan | undefined
   recipes: Recipe[]
   onSave: (title: string, notes: string, recipeId: string | null, addToShopping: boolean, recipe: Recipe | null) => Promise<void>
@@ -183,32 +136,40 @@ interface MealSheetProps {
   onClose: () => void
 }
 
-function MealSheet({ date, meal, recipes, onSave, onDelete, onClose }: MealSheetProps) {
-  const [title, setTitle]           = useState(meal?.title ?? '')
-  const [notes, setNotes]           = useState(meal?.notes ?? '')
-  const [recipeId, setRecipeId]     = useState<string | null>(meal?.recipe_id ?? null)
+function MealPicker({ date, meal, recipes, onSave, onDelete, onClose }: MealPickerProps) {
+  const isEditing = !!meal
+
+  const [mode,          setMode]          = useState<PickerMode>(isEditing ? 'edit' : 'choice')
+  const [search,        setSearch]        = useState('')
+  const [title,         setTitle]         = useState(meal?.title ?? '')
+  const [notes,         setNotes]         = useState(meal?.notes ?? '')
+  const [recipeId,      setRecipeId]      = useState<string | null>(meal?.recipe_id ?? null)
   const [addToShopping, setAddToShopping] = useState(false)
-  const [saving, setSaving]         = useState(false)
-  const [deleting, setDeleting]     = useState(false)
-  const [error, setError]           = useState<string | null>(null)
-  const [addedCount, setAddedCount] = useState<number | null>(null)
+  const [saving,        setSaving]        = useState(false)
+  const [deleting,      setDeleting]      = useState(false)
+  const [error,         setError]         = useState<string | null>(null)
 
-  const dateKey = date?.toISOString()
-
+  const yourRecipes    = recipes.filter(r => !r.is_starter)
+  const starterRecipes = recipes.filter(r => r.is_starter)
   const selectedRecipe = recipeId ? recipes.find(r => r.id === recipeId) ?? null : null
 
-  function handleSelectRecipe(id: string | null) {
-    const prevRecipe = recipeId ? recipes.find(r => r.id === recipeId) : null
-    setRecipeId(id)
-    setAddedCount(null)
-    if (id) {
-      const r = recipes.find(rec => rec.id === id)
-      const titleMatchesPrev = prevRecipe && title.trim().toLowerCase() === prevRecipe.title.toLowerCase()
-      if (r && (!title.trim() || titleMatchesPrev)) setTitle(r.title)
-      if (r && r.ingredients.length > 0) setAddToShopping(true)
-    } else {
-      setAddToShopping(false)
-    }
+  const dateLabel = `${DAY_SHORT[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`
+
+  function filterRecipes(list: Recipe[]) {
+    if (!search.trim()) return list
+    return list.filter(r => r.title.toLowerCase().includes(search.toLowerCase()))
+  }
+
+  function handleSelectRecipe(recipe: Recipe) {
+    setRecipeId(recipe.id)
+    setTitle(recipe.title)
+    if (recipe.ingredients.length > 0) setAddToShopping(true)
+    setMode('edit')
+  }
+
+  function handleBack() {
+    if (mode === 'recipe-list') { setSearch(''); setMode('choice') }
+    else onClose()
   }
 
   async function handleSave() {
@@ -227,114 +188,245 @@ function MealSheet({ date, meal, recipes, onSave, onDelete, onClose }: MealSheet
     onClose()
   }
 
-  if (!date) return null
-
-  const dateLabel = `${DAY_SHORT[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`
-
   return (
-    <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 pt-5 max-w-lg mx-auto max-h-[92dvh] overflow-y-auto">
-      <SheetHeader className="mb-4 text-left">
-        <SheetTitle>{meal ? 'Edit meal' : 'Plan a meal'}</SheetTitle>
-        <p className="text-sm text-muted-foreground">{dateLabel}</p>
-      </SheetHeader>
+    <div className="fixed inset-0 z-50 bg-background flex flex-col">
 
-      <div className="space-y-4">
-        <RecipePicker
-          recipes={recipes}
-          selectedId={recipeId}
-          onSelect={handleSelectRecipe}
-          key={dateKey}
-        />
-
-        <div className="space-y-1.5">
-          <Label htmlFor="mealTitle">What's for dinner?</Label>
-          <Input
-            id="mealTitle"
-            placeholder="e.g. Spaghetti bolognese"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
-            autoFocus
-            key={dateKey}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="mealNotes">Notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
-          <Textarea
-            id="mealNotes"
-            placeholder="e.g. Double the sauce, use wholemeal pasta"
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={2}
-            className="resize-none"
-          />
-        </div>
-
-        {/* Add to shopping toggle — only when recipe with ingredients is selected */}
-        {selectedRecipe && selectedRecipe.ingredients.length > 0 && (
-          <button
-            onClick={() => setAddToShopping(v => !v)}
-            className={cn(
-              'w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors',
-              addToShopping
-                ? 'border-primary bg-primary/5'
-                : 'border-border bg-muted/30',
-            )}
-          >
-            <div className={cn(
-              'w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
-              addToShopping ? 'bg-primary border-primary' : 'border-border',
-            )}>
-              {addToShopping && <Check size={12} strokeWidth={3} className="text-primary-foreground" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                <ShoppingCart size={14} className="shrink-0" />
-                Add ingredients to shopping list
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {selectedRecipe.ingredients.length} ingredient{selectedRecipe.ingredients.length !== 1 ? 's' : ''} · quantities merged if already on list
-              </p>
-            </div>
-          </button>
-        )}
-
-        {addedCount !== null && (
-          <p className="text-sm text-primary bg-primary/10 rounded-lg px-3 py-2">
-            {addedCount === 0
-              ? 'All ingredients already on your list.'
-              : `${addedCount} ingredient${addedCount !== 1 ? 's' : ''} added to your shopping list.`}
+      {/* Header */}
+      <div className="shrink-0 flex items-center gap-2 px-2 h-14 border-b border-border bg-background/95 backdrop-blur-sm">
+        <button
+          onClick={handleBack}
+          className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          <ArrowLeft size={20} strokeWidth={2.5} />
+        </button>
+        <div>
+          <p className="text-sm font-bold text-foreground leading-tight">
+            {mode === 'recipe-list' ? 'Pick a recipe' : isEditing ? 'Edit meal' : 'Plan a meal'}
           </p>
-        )}
-
-        {error && (
-          <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
-        )}
-
-        <div className="flex gap-2 pt-1">
-          {meal && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-            >
-              <Trash2 size={16} />
-            </Button>
+          {mode !== 'recipe-list' && (
+            <p className="text-xs text-muted-foreground leading-tight">{dateLabel}</p>
           )}
-          <Button className="flex-1" onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                Saving…
-              </span>
-            ) : meal ? 'Update' : 'Save meal'}
-          </Button>
         </div>
       </div>
-    </SheetContent>
+
+      {/* ── Choice ── */}
+      {mode === 'choice' && (
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3 max-w-lg mx-auto w-full">
+          <button
+            onClick={() => setMode('recipe-list')}
+            className="w-full rounded-2xl border-2 border-border bg-card p-5 text-left hover:border-primary/50 hover:shadow-sm active:scale-[0.99] transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <span className="text-4xl leading-none">📖</span>
+              <div>
+                <p className="text-base font-semibold text-foreground">Pick a recipe</p>
+                <p className="text-sm text-muted-foreground mt-0.5">From your saved recipes</p>
+              </div>
+              <ChevronRight size={18} className="ml-auto text-muted-foreground/50 shrink-0" />
+            </div>
+          </button>
+
+          <button
+            onClick={() => setMode('edit')}
+            className="w-full rounded-2xl border-2 border-border bg-card p-5 text-left hover:border-primary/50 hover:shadow-sm active:scale-[0.99] transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <span className="text-4xl leading-none">✏️</span>
+              <div>
+                <p className="text-base font-semibold text-foreground">Just name a meal</p>
+                <p className="text-sm text-muted-foreground mt-0.5">Type any meal name</p>
+              </div>
+              <ChevronRight size={18} className="ml-auto text-muted-foreground/50 shrink-0" />
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* ── Recipe list ── */}
+      {mode === 'recipe-list' && (
+        <div className="flex-1 flex flex-col overflow-hidden max-w-lg mx-auto w-full">
+          <div className="px-4 py-3 border-b border-border shrink-0">
+            <div className="relative">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search recipes…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5">
+            {yourRecipes.length > 0 && filterRecipes(yourRecipes).length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 px-1">
+                  Your recipes
+                </p>
+                <div className="space-y-2">
+                  {filterRecipes(yourRecipes).map(r => (
+                    <button
+                      key={r.id}
+                      onClick={() => handleSelectRecipe(r)}
+                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-left hover:border-primary/40 hover:shadow-sm active:scale-[0.99] transition-all flex items-center gap-3"
+                    >
+                      <span className="text-xl shrink-0">{mealEmoji(r.title)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{r.title}</p>
+                        {r.ingredients.length > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            {r.ingredients.length} ingredient{r.ingredients.length !== 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight size={15} className="shrink-0 text-muted-foreground/40" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {starterRecipes.length > 0 && filterRecipes(starterRecipes).length > 0 && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 px-1">
+                  Starter recipes
+                </p>
+                <div className="space-y-2">
+                  {filterRecipes(starterRecipes).map(r => (
+                    <button
+                      key={r.id}
+                      onClick={() => handleSelectRecipe(r)}
+                      className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-left hover:border-primary/40 hover:shadow-sm active:scale-[0.99] transition-all flex items-center gap-3"
+                    >
+                      <span className="text-xl shrink-0">{mealEmoji(r.title)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{r.title}</p>
+                        {r.ingredients.length > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            {r.ingredients.length} ingredient{r.ingredients.length !== 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight size={15} className="shrink-0 text-muted-foreground/40" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {filterRecipes([...yourRecipes, ...starterRecipes]).length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+                <UtensilsCrossed size={32} strokeWidth={1.25} />
+                <p className="text-sm">No recipes found</p>
+              </div>
+            )}
+
+            <div className="h-4" />
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit / confirm ── */}
+      {mode === 'edit' && (
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 max-w-lg mx-auto w-full">
+
+          {/* Selected recipe chip */}
+          {selectedRecipe && (
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/10 rounded-2xl">
+              <span className="text-xl shrink-0">{mealEmoji(selectedRecipe.title)}</span>
+              <p className="text-sm font-semibold text-primary flex-1 truncate">{selectedRecipe.title}</p>
+              <button
+                onClick={() => { setRecipeId(null); setAddToShopping(false) }}
+                className="text-muted-foreground hover:text-foreground transition-colors text-base leading-none shrink-0"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="mealTitle">Meal name</Label>
+            <Input
+              id="mealTitle"
+              placeholder="e.g. Spaghetti bolognese"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleSave() } }}
+              autoFocus={!selectedRecipe}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="mealNotes">
+              Notes <span className="text-muted-foreground font-normal">(optional)</span>
+            </Label>
+            <Textarea
+              id="mealNotes"
+              placeholder="e.g. Double the sauce, use wholemeal pasta"
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              rows={2}
+              className="resize-none"
+            />
+          </div>
+
+          {selectedRecipe && selectedRecipe.ingredients.length > 0 && (
+            <button
+              onClick={() => setAddToShopping(v => !v)}
+              className={cn(
+                'w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors',
+                addToShopping ? 'border-primary bg-primary/5' : 'border-border bg-muted/30',
+              )}
+            >
+              <div className={cn(
+                'w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors',
+                addToShopping ? 'bg-primary border-primary' : 'border-border',
+              )}>
+                {addToShopping && <Check size={12} strokeWidth={3} className="text-primary-foreground" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                  <ShoppingCart size={14} className="shrink-0" />
+                  Add ingredients to shopping list
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {selectedRecipe.ingredients.length} ingredient{selectedRecipe.ingredients.length !== 1 ? 's' : ''} · quantities merged if already on list
+                </p>
+              </div>
+            </button>
+          )}
+
+          {error && (
+            <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            {isEditing && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => void handleDelete()}
+                disabled={deleting}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 shrink-0"
+              >
+                <Trash2 size={16} />
+              </Button>
+            )}
+            <Button className="flex-1" onClick={() => void handleSave()} disabled={saving}>
+              {saving ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                  Saving…
+                </span>
+              ) : isEditing ? 'Update' : 'Save meal'}
+            </Button>
+          </div>
+
+          <div className="h-6" />
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -344,8 +436,8 @@ export default function MealsPage() {
   const { household } = useHousehold()
   const weekStartDay = household?.week_start_day ?? 'monday'
 
-  const [weekOffset, setWeekOffset] = useState(0)
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [weekOffset,    setWeekOffset]    = useState(0)
+  const [selectedDate,  setSelectedDate]  = useState<Date | null>(null)
 
   const today     = startOfDay(new Date())
   const baseStart = getWeekStart(today, weekStartDay)
@@ -355,7 +447,7 @@ export default function MealsPage() {
   const isCurrentWeek = weekOffset === 0
 
   const { meals, saveMeal, deleteMeal } = useMealPlans(days)
-  const { recipes } = useRecipes()
+  const { recipes }                     = useRecipes()
 
   function mealForDay(day: Date) {
     return meals.find(m => m.date === toDateString(day))
@@ -392,10 +484,7 @@ export default function MealsPage() {
       for (const ing of recipe.ingredients) {
         const match = existingMap.get(ing.name.toLowerCase())
         if (match) {
-          toUpdate.push({
-            id: match.id,
-            quantity: mergeQuantity(match.quantity, ing.quantity),
-          })
+          toUpdate.push({ id: match.id, quantity: mergeQuantity(match.quantity, ing.quantity) })
         } else {
           toInsert.push({
             household_id: household.id,
@@ -431,21 +520,16 @@ export default function MealsPage() {
           >
             <ChevronLeft size={20} />
           </button>
-
           <div className="flex-1 text-center">
             <p className="text-sm font-bold text-foreground leading-tight">
               {formatWeekRange(weekStart, weekEnd)}
             </p>
             {!isCurrentWeek && (
-              <button
-                onClick={() => setWeekOffset(0)}
-                className="text-xs text-primary hover:underline font-semibold"
-              >
+              <button onClick={() => setWeekOffset(0)} className="text-xs text-primary hover:underline font-semibold">
                 This week
               </button>
             )}
           </div>
-
           <button
             onClick={() => setWeekOffset(o => o + 1)}
             className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -470,10 +554,10 @@ export default function MealsPage() {
         <div className="h-4" />
       </div>
 
-      {/* Edit sheet */}
-      <Sheet open={!!selectedDate} onOpenChange={open => { if (!open) setSelectedDate(null) }}>
-        <MealSheet
-          key={selectedDate?.toISOString() ?? ''}
+      {/* Full-screen picker */}
+      {selectedDate && (
+        <MealPicker
+          key={selectedDate.toISOString()}
           date={selectedDate}
           meal={activeMeal}
           recipes={recipes}
@@ -481,7 +565,7 @@ export default function MealsPage() {
           onDelete={handleDelete}
           onClose={() => setSelectedDate(null)}
         />
-      </Sheet>
+      )}
     </div>
   )
 }
