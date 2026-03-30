@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useHousehold } from '@/contexts/HouseholdContext'
+import { useHousehold, type AustralianState } from '@/contexts/HouseholdContext'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { usePWAInstall } from '@/hooks/usePWAInstall'
 import { cn } from '@/lib/utils'
@@ -40,6 +40,9 @@ export default function SettingsPage() {
   // Week start editing
   const [savingWeek, setSavingWeek] = useState(false)
 
+  // State editing
+  const [savingState, setSavingState] = useState(false)
+
   const joinCode = household?.join_code
 
   async function copyCode() {
@@ -61,6 +64,13 @@ export default function SettingsPage() {
     await updateHousehold({ name: trimmed })
     setSavingName(false)
     setEditingName(false)
+  }
+
+  async function handleStateChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.target.value
+    setSavingState(true)
+    await updateHousehold({ state: (value || null) as AustralianState | null })
+    setSavingState(false)
   }
 
   async function toggleWeekStart() {
@@ -124,6 +134,27 @@ export default function SettingsPage() {
               <span className="capitalize">{household?.week_start_day}</span>
               <Pencil size={12} className="text-muted-foreground/60" />
             </button>
+          </div>
+
+          {/* School state */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-sm text-muted-foreground">School state</span>
+            <select
+              value={household?.state ?? ''}
+              onChange={handleStateChange}
+              disabled={savingState}
+              className="text-sm font-medium text-foreground bg-transparent border-0 outline-none cursor-pointer text-right disabled:opacity-50 pr-0"
+            >
+              <option value="">Not set</option>
+              <option value="ACT">ACT</option>
+              <option value="NSW">NSW</option>
+              <option value="NT">NT</option>
+              <option value="QLD">QLD</option>
+              <option value="SA">SA</option>
+              <option value="TAS">TAS</option>
+              <option value="VIC">VIC</option>
+              <option value="WA">WA</option>
+            </select>
           </div>
         </Section>
 

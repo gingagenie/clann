@@ -2,10 +2,13 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './AuthContext'
 
+export type AustralianState = 'VIC' | 'NSW' | 'QLD' | 'SA' | 'WA' | 'TAS' | 'ACT' | 'NT'
+
 export interface Household {
   id: string
   name: string
   week_start_day: 'monday' | 'sunday'
+  state: AustralianState | null
   join_code: string | null
   created_at: string
 }
@@ -28,7 +31,7 @@ interface HouseholdContextValue {
   loading: boolean
   initialized: boolean
   refresh: () => Promise<void>
-  updateHousehold: (updates: Partial<Pick<Household, 'name' | 'week_start_day'>>) => Promise<void>
+  updateHousehold: (updates: Partial<Pick<Household, 'name' | 'week_start_day' | 'state'>>) => Promise<void>
 }
 
 const HouseholdContext = createContext<HouseholdContextValue | null>(null)
@@ -80,7 +83,7 @@ export function HouseholdProvider({ children }: { children: React.ReactNode }) {
     refresh()
   }, [authLoading, refresh])
 
-  const updateHousehold = useCallback(async (updates: Partial<Pick<Household, 'name' | 'week_start_day'>>) => {
+  const updateHousehold = useCallback(async (updates: Partial<Pick<Household, 'name' | 'week_start_day' | 'state'>>) => {
     if (!household) return
     const { error } = await supabase.from('households').update(updates).eq('id', household.id)
     if (!error) setHousehold(prev => prev ? { ...prev, ...updates } : null)
