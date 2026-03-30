@@ -8,7 +8,6 @@ import {
   startOfDay, addDays, getWeekStart,
   toDateString, DAY_SHORT, MONTHS,
 } from '@/lib/dates'
-import { cn } from '@/lib/utils'
 import { CalendarDays, UtensilsCrossed, ListTodo, ShoppingCart } from 'lucide-react'
 
 // ── Helpers ─────────────────────────────────────────────────────
@@ -102,27 +101,20 @@ export default function HomePage() {
           {/* ── Today ── */}
           <button
             onClick={() => navigate('/tasks')}
-            className="group relative rounded-2xl overflow-hidden shadow-sm active:scale-[0.97] transition-transform text-left"
-            style={{ background: 'linear-gradient(145deg, #2d6a4f, #40916c)' }}
+            className="rounded-2xl overflow-hidden active:scale-[0.97] transition-transform text-left"
+            style={{ background: '#f5f0e8', border: '3px solid #3a5c2e' }}
           >
             <div className="p-4 flex flex-col h-full min-h-[160px]">
               <div className="flex items-start justify-between">
-                <CalendarDays size={16} className="text-white/60 mt-0.5" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">Today</span>
+                <CalendarDays size={16} style={{ color: '#3a5c2e' }} className="mt-0.5" />
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#3a5c2e' }}>Today</span>
               </div>
               <div className="mt-auto">
-                <p className="text-5xl font-black text-white leading-none">{today.getDate()}</p>
-                <p className="text-sm font-bold text-white/80 uppercase tracking-wide mt-0.5">
+                <p className="text-5xl font-black leading-none text-black">{today.getDate()}</p>
+                <p className="text-sm font-bold uppercase tracking-wide mt-0.5 text-black">
                   {DAY_SHORT[today.getDay()]} · {MONTHS[today.getMonth()]}
                 </p>
-                <p className={cn(
-                  'text-xs font-semibold mt-2 px-2 py-0.5 rounded-full inline-block',
-                  todayTasks.length === 0
-                    ? 'bg-white/10 text-white/60'
-                    : todayDone === todayTasks.length
-                      ? 'bg-white/20 text-white'
-                      : 'bg-white/15 text-white',
-                )}>
+                <p className="text-xs font-semibold mt-2 text-black/60">
                   {todayTasks.length === 0
                     ? 'No tasks'
                     : todayDone === todayTasks.length
@@ -136,26 +128,26 @@ export default function HomePage() {
           {/* ── Tonight's Dinner ── */}
           <button
             onClick={() => navigate('/meals')}
-            className="group relative rounded-2xl overflow-hidden shadow-sm active:scale-[0.97] transition-transform text-left"
-            style={{ background: 'linear-gradient(145deg, #fdf6ec, #fcecd6)' }}
+            className="rounded-2xl overflow-hidden active:scale-[0.97] transition-transform text-left"
+            style={{ background: '#f5f0e8', border: '3px solid #3a5c2e' }}
           >
             <div className="p-4 flex flex-col h-full min-h-[160px]">
               <div className="flex items-start justify-between">
-                <UtensilsCrossed size={16} className="text-amber-400 mt-0.5" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70">Dinner</span>
+                <UtensilsCrossed size={16} style={{ color: '#3a5c2e' }} className="mt-0.5" />
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#3a5c2e' }}>Dinner</span>
               </div>
               <div className="mt-auto">
                 {todayMeal ? (
                   <>
                     <p className="text-4xl leading-none">{mealEmoji(todayMeal.title)}</p>
-                    <p className="text-sm font-bold text-stone-800 mt-2 leading-snug line-clamp-2">
+                    <p className="text-sm font-bold text-black mt-2 leading-snug line-clamp-2">
                       {todayMeal.title}
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="text-4xl leading-none">🍽️</p>
-                    <p className="text-sm font-semibold text-stone-400 mt-2">Not planned yet</p>
+                    <p className="text-sm font-semibold text-black/40 mt-2">Not planned yet</p>
                   </>
                 )}
               </div>
@@ -165,28 +157,28 @@ export default function HomePage() {
           {/* ── Tasks ── */}
           <button
             onClick={() => navigate('/tasks')}
-            className="group relative rounded-2xl overflow-hidden shadow-sm active:scale-[0.97] transition-transform text-left"
-            style={{ background: 'linear-gradient(145deg, #f0faf4, #daf0e4)' }}
+            className="rounded-2xl overflow-hidden active:scale-[0.97] transition-transform text-left"
+            style={{ background: '#f5f0e8', border: '3px solid #3a5c2e' }}
           >
             <div className="p-4 flex flex-col h-full min-h-[160px]">
               <div className="flex items-start justify-between">
-                <ListTodo size={16} className="text-emerald-500 mt-0.5" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">Tasks</span>
+                <ListTodo size={16} style={{ color: '#3a5c2e' }} className="mt-0.5" />
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#3a5c2e' }}>Tasks</span>
               </div>
               <div className="mt-auto">
                 {nextTask ? (
                   <>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/60 mb-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#3a5c2e' }}>
                       {dayLabel(nextTask.due_date, todayStr)}
                     </p>
-                    <p className="text-sm font-bold text-stone-800 leading-snug line-clamp-3">
+                    <p className="text-sm font-bold text-black leading-snug line-clamp-3">
                       {nextTask.name}
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="text-3xl leading-none">✅</p>
-                    <p className="text-sm font-bold text-stone-500 mt-2">All clear</p>
+                    <p className="text-sm font-bold text-black/50 mt-2">All clear</p>
                   </>
                 )}
               </div>
@@ -196,26 +188,24 @@ export default function HomePage() {
           {/* ── Shopping ── */}
           <button
             onClick={() => navigate('/shopping')}
-            className="group relative rounded-2xl overflow-hidden shadow-sm active:scale-[0.97] transition-transform text-left"
-            style={{ background: 'linear-gradient(145deg, #fdf6ec, #fcecd6)' }}
+            className="rounded-2xl overflow-hidden active:scale-[0.97] transition-transform text-left"
+            style={{ background: '#f5f0e8', border: '3px solid #3a5c2e' }}
           >
             <div className="p-4 flex flex-col h-full min-h-[160px]">
               <div className="flex items-start justify-between">
-                <ShoppingCart size={16} className="text-amber-400 mt-0.5" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70">Shopping</span>
+                <ShoppingCart size={16} style={{ color: '#3a5c2e' }} className="mt-0.5" />
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#3a5c2e' }}>Shopping</span>
               </div>
               <div className="mt-auto">
                 {uncheckedCount === 0 ? (
                   <>
                     <p className="text-3xl leading-none">🛒</p>
-                    <p className="text-sm font-bold text-stone-500 mt-2">Nothing needed</p>
+                    <p className="text-sm font-bold text-black/50 mt-2">Nothing needed</p>
                   </>
                 ) : (
                   <>
-                    <p className="text-5xl font-black leading-none" style={{ color: '#b45309' }}>
-                      {uncheckedCount}
-                    </p>
-                    <p className="text-sm font-bold text-stone-500 mt-1">
+                    <p className="text-5xl font-black leading-none text-black">{uncheckedCount}</p>
+                    <p className="text-sm font-bold text-black/60 mt-1">
                       {uncheckedCount === 1 ? 'item to get' : 'items to get'}
                     </p>
                   </>
