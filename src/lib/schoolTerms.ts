@@ -99,8 +99,11 @@ export function isSchoolHoliday(state: AustralianState, dateStr: string): boolea
   return getTermForDate(state, dateStr) === null
 }
 
+// Always operate in UTC so Australian timezone offsets don't shift the date.
+// e.g. in AEDT (UTC+11): new Date('2026-04-02T00:00:00') local → UTC rolls back
+// to 2026-04-01, so toISOString() would return the wrong day.
 function offsetDate(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
+  const d = new Date(dateStr + 'T00:00:00Z')   // parse as UTC midnight
+  d.setUTCDate(d.getUTCDate() + days)           // add days in UTC
+  return d.toISOString().slice(0, 10)           // YYYY-MM-DD, still UTC
 }
