@@ -192,77 +192,46 @@ export default function SettingsPage() {
         </Section>
 
         {/* Members */}
-        <Section title="Members">
+        <Section title="Adults">
           {adults.map(m => (
             <div key={m.id} className="flex items-center justify-between px-4 py-3.5">
               <span className="text-sm font-medium text-foreground">{m.name}</span>
-              <div className="flex items-center gap-2">
-                <span className={cn(
-                  'text-xs font-medium px-2 py-0.5 rounded-full',
-                  m.auth_user_id
-                    ? m.auth_user_id === user?.id
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-accent text-accent-foreground'
-                    : 'bg-muted text-muted-foreground',
-                )}>
-                  {m.auth_user_id ? (m.auth_user_id === user?.id ? 'You' : 'Linked') : 'Adult'}
-                </span>
-                {!m.is_primary && m.auth_user_id !== user?.id && (
-                  <button
-                    onClick={() => void handleDeleteMember(m.id)}
-                    disabled={deletingMember === m.id}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
+              <span className={cn(
+                'text-xs font-medium px-2 py-0.5 rounded-full',
+                m.auth_user_id === user?.id
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-accent text-accent-foreground',
+              )}>
+                {m.auth_user_id === user?.id ? 'You' : 'Joined'}
+              </span>
             </div>
           ))}
+        </Section>
+
+        {/* Kids */}
+        <Section title="Kids">
           {kids.map(m => (
             <div key={m.id} className="flex items-center justify-between px-4 py-3.5">
               <span className="text-sm font-medium text-foreground">{m.name}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                  Child
-                </span>
-                <button
-                  onClick={() => void handleDeleteMember(m.id)}
-                  disabled={deletingMember === m.id}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
+              <button
+                onClick={() => void handleDeleteMember(m.id)}
+                disabled={deletingMember === m.id}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40"
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
           ))}
 
-          {/* Add member form */}
           {addingMember ? (
             <div className="px-4 py-3 space-y-3">
               <Input
-                placeholder="Name"
+                placeholder="Child's name"
                 value={newMemberName}
                 onChange={e => setNewMemberName(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') void handleAddMember(); if (e.key === 'Escape') setAddingMember(false) }}
                 autoFocus
               />
-              <div className="flex gap-2">
-                {(['adult', 'child'] as const).map(role => (
-                  <button
-                    key={role}
-                    onClick={() => setNewMemberRole(role)}
-                    className={cn(
-                      'flex-1 py-2 rounded-xl border text-sm font-medium transition-colors capitalize',
-                      newMemberRole === role
-                        ? 'bg-primary border-primary text-primary-foreground'
-                        : 'border-border text-muted-foreground',
-                    )}
-                  >
-                    {role}
-                  </button>
-                ))}
-              </div>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setAddingMember(false)}>Cancel</Button>
                 <Button className="flex-1" onClick={() => void handleAddMember()} disabled={savingMember || !newMemberName.trim()}>
@@ -272,11 +241,11 @@ export default function SettingsPage() {
             </div>
           ) : (
             <button
-              onClick={() => setAddingMember(true)}
+              onClick={() => { setAddingMember(true); setNewMemberRole('child') }}
               className="flex items-center gap-2 w-full px-4 py-3.5 text-sm text-primary font-medium hover:bg-muted/50 transition-colors"
             >
               <Plus size={16} />
-              Add member
+              Add a kid
             </button>
           )}
         </Section>
