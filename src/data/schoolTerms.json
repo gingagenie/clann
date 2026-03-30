@@ -1,0 +1,82 @@
+{
+  "_sources": {
+    "VIC": "vic.gov.au/school-term-dates-and-holidays-victoria",
+    "NSW": "education.nsw.gov.au/schooling/calendars/2026 (Eastern division)",
+    "QLD": "education.qld.gov.au/about-us/calendar/term-dates",
+    "SA":  "education.sa.gov.au/students/term-dates-south-australian-state-schools",
+    "WA":  "education.wa.edu.au/future-term-dates",
+    "TAS": "decyp.tas.gov.au/about-us/term-dates",
+    "ACT": "act.gov.au/living-in-the-act/public-holidays-school-terms-and-daylight-saving",
+    "NT":  "nt.gov.au/learning/primary-and-secondary-students/school-term-dates-in-nt"
+  },
+  "VIC": {
+    "2026": [
+      { "term": 1, "start": "2026-01-27", "end": "2026-04-02" },
+      { "term": 2, "start": "2026-04-20", "end": "2026-06-26" },
+      { "term": 3, "start": "2026-07-13", "end": "2026-09-18" },
+      { "term": 4, "start": "2026-10-05", "end": "2026-12-18" }
+    ],
+    "2027": [
+      { "term": 1, "start": "2027-01-27", "end": "2027-03-25" },
+      { "term": 2, "start": "2027-04-12", "end": "2027-06-25" },
+      { "term": 3, "start": "2027-07-12", "end": "2027-09-17" },
+      { "term": 4, "start": "2027-10-04", "end": "2027-12-17" }
+    ]
+  },
+  "NSW": {
+    "2026": [
+      { "term": 1, "start": "2026-02-02", "end": "2026-04-02" },
+      { "term": 2, "start": "2026-04-22", "end": "2026-07-03" },
+      { "term": 3, "start": "2026-07-21", "end": "2026-09-25" },
+      { "term": 4, "start": "2026-10-13", "end": "2026-12-17" }
+    ]
+  },
+  "QLD": {
+    "2026": [
+      { "term": 1, "start": "2026-01-27", "end": "2026-04-02" },
+      { "term": 2, "start": "2026-04-20", "end": "2026-06-26" },
+      { "term": 3, "start": "2026-07-13", "end": "2026-09-18" },
+      { "term": 4, "start": "2026-10-06", "end": "2026-12-11" }
+    ]
+  },
+  "SA": {
+    "2026": [
+      { "term": 1, "start": "2026-01-27", "end": "2026-04-10" },
+      { "term": 2, "start": "2026-04-27", "end": "2026-07-03" },
+      { "term": 3, "start": "2026-07-20", "end": "2026-09-25" },
+      { "term": 4, "start": "2026-10-12", "end": "2026-12-11" }
+    ]
+  },
+  "WA": {
+    "2026": [
+      { "term": 1, "start": "2026-02-02", "end": "2026-04-02" },
+      { "term": 2, "start": "2026-04-20", "end": "2026-07-03" },
+      { "term": 3, "start": "2026-07-20", "end": "2026-09-25" },
+      { "term": 4, "start": "2026-10-12", "end": "2026-12-17" }
+    ]
+  },
+  "TAS": {
+    "2026": [
+      { "term": 1, "start": "2026-02-05", "end": "2026-04-17" },
+      { "term": 2, "start": "2026-05-04", "end": "2026-07-10" },
+      { "term": 3, "start": "2026-07-27", "end": "2026-10-02" },
+      { "term": 4, "start": "2026-10-19", "end": "2026-12-18" }
+    ]
+  },
+  "ACT": {
+    "2026": [
+      { "term": 1, "start": "2026-02-02", "end": "2026-04-02" },
+      { "term": 2, "start": "2026-04-21", "end": "2026-07-03" },
+      { "term": 3, "start": "2026-07-21", "end": "2026-09-25" },
+      { "term": 4, "start": "2026-10-13", "end": "2026-12-18" }
+    ]
+  },
+  "NT": {
+    "2026": [
+      { "term": 1, "start": "2026-01-29", "end": "2026-04-02" },
+      { "term": 2, "start": "2026-04-14", "end": "2026-06-19" },
+      { "term": 3, "start": "2026-07-14", "end": "2026-09-18" },
+      { "term": 4, "start": "2026-10-06", "end": "2026-12-10" }
+    ]
+  }
+}
