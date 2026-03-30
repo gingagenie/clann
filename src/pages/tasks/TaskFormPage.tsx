@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useHousehold } from '@/contexts/HouseholdContext'
 import { Button } from '@/components/ui/button'
@@ -58,6 +58,8 @@ function DayOfMonthPicker({ value, onChange }: { value: number | null; onChange:
 export default function TaskFormPage() {
   const navigate = useNavigate()
   const { id }   = useParams<{ id?: string }>()
+  const [searchParams] = useSearchParams()
+  const dateParam = searchParams.get('date')
   const isEdit   = !!id
 
   const { household, members } = useHousehold()
@@ -65,10 +67,10 @@ export default function TaskFormPage() {
 
   const [loading,      setLoading]      = useState(isEdit)
   const [name,         setName]         = useState('')
-  const [repeat,       setRepeat]       = useState<RepeatType>('weekly')
+  const [repeat,       setRepeat]       = useState<RepeatType>(dateParam ? 'one_off' : 'weekly')
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [dayOfMonth,   setDayOfMonth]   = useState<number | null>(null)
-  const [oneOffDate,   setOneOffDate]   = useState('')
+  const [oneOffDate,   setOneOffDate]   = useState(dateParam ?? '')
   const [assignedTo,   setAssignedTo]   = useState<string | null>(null)
   const [reminder,     setReminder]     = useState(false)
   const [remHour,      setRemHour]      = useState('08')

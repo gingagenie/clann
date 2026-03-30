@@ -7,14 +7,16 @@ import {
   toDateString, formatWeekRange, DAY_SHORT,
 } from '@/lib/dates'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Plus, Check, Settings2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ChevronLeft, ChevronRight, Check, Settings2 } from 'lucide-react'
 
 // ── Task row ───────────────────────────────────────────────────
 
 function TaskRow({ task, onToggle, isToday }: { task: WeekTask; onToggle: () => void; isToday: boolean }) {
   return (
-    <button onClick={onToggle} className="flex items-center gap-3 w-full text-left group py-0.5">
+    <button
+      onClick={e => { e.stopPropagation(); onToggle() }}
+      className="flex items-center gap-3 w-full text-left group py-0.5"
+    >
       <span className={cn(
         'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
         task.completed
@@ -45,12 +47,13 @@ interface DayCardProps {
   isPast: boolean
   tasks: WeekTask[]
   onToggleTask: (id: string, completed: boolean) => void
+  onTap: () => void
 }
 
-function DayCard({ date, isToday, isPast, tasks, onToggleTask }: DayCardProps) {
+function DayCard({ date, isToday, isPast, tasks, onToggleTask, onTap }: DayCardProps) {
   if (isToday) {
     return (
-      <div className="rounded-2xl overflow-hidden shadow-md border border-primary/20 bg-card">
+      <div onClick={onTap} className="rounded-2xl overflow-hidden shadow-md border border-primary/20 bg-card cursor-pointer active:scale-[0.99] transition-transform">
         <div className="bg-primary px-4 py-3 flex items-center gap-3">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-black text-primary-foreground leading-none">{date.getDate()}</span>
@@ -73,10 +76,13 @@ function DayCard({ date, isToday, isPast, tasks, onToggleTask }: DayCardProps) {
   }
 
   return (
-    <div className={cn(
-      'rounded-2xl overflow-hidden border border-border bg-card shadow-sm transition-opacity',
-      isPast && 'opacity-50',
-    )}>
+    <div
+      onClick={onTap}
+      className={cn(
+        'rounded-2xl overflow-hidden border border-border bg-card shadow-sm transition-all cursor-pointer active:scale-[0.99]',
+        isPast && 'opacity-50',
+      )}
+    >
       <div className="flex">
         <div className="w-16 shrink-0 flex flex-col items-center justify-center py-4 gap-0.5 bg-muted/40 border-r border-border">
           <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
@@ -178,21 +184,10 @@ export default function TasksPage() {
             isPast={day < today && !isSameDay(day, today)}
             tasks={tasksForDay(day)}
             onToggleTask={toggleComplete}
+            onTap={() => navigate(`/tasks/add?date=${toDateString(day)}`)}
           />
         ))}
         <div className="h-4" />
-      </div>
-
-      {/* FAB */}
-      <div className="fixed bottom-[4.5rem] right-4 z-20">
-        <Button
-          size="icon"
-          className="w-13 h-13 rounded-full shadow-lg shadow-primary/30"
-          onClick={() => navigate('/tasks/add')}
-          aria-label="Add recurring task"
-        >
-          <Plus size={22} strokeWidth={2.5} />
-        </Button>
       </div>
     </div>
   )
