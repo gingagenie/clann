@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useHousehold } from '@/contexts/HouseholdContext'
 import { useMealPlans, type MealPlan } from '@/hooks/useMealPlans'
 import { useRecipes, type Recipe } from '@/hooks/useRecipes'
@@ -12,7 +13,7 @@ import { mergeQuantity } from '@/lib/quantities'
 import { categorise } from '@/lib/categorise'
 import {
   ChevronLeft, ChevronRight, UtensilsCrossed, Pencil,
-  Trash2, ShoppingCart, Check, ArrowLeft, Search,
+  Trash2, ShoppingCart, Check, ArrowLeft, Search, ChefHat,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -433,6 +434,7 @@ function MealPicker({ date, meal, recipes, onSave, onDelete, onClose }: MealPick
 // ── Meals page ─────────────────────────────────────────────────
 
 export default function MealsPage() {
+  const navigate     = useNavigate()
   const { household } = useHousehold()
   const weekStartDay = household?.week_start_day ?? 'monday'
 
@@ -541,6 +543,15 @@ export default function MealsPage() {
 
       {/* Day cards */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2 max-w-lg mx-auto w-full">
+        {/* Recipes entry point */}
+        <button
+          onClick={() => navigate('/recipes')}
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl border border-border bg-card shadow-sm hover:border-primary/30 hover:shadow-md active:scale-[0.99] transition-all text-left"
+        >
+          <ChefHat size={16} className="text-muted-foreground shrink-0" />
+          <span className="text-sm font-medium text-foreground flex-1">Recipes</span>
+          <ChevronRight size={15} className="text-muted-foreground/50 shrink-0" />
+        </button>
         {days.map(day => (
           <MealCard
             key={day.toISOString()}
