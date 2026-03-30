@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useHousehold } from '@/contexts/HouseholdContext'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Plus, ChevronRight, ClipboardList } from 'lucide-react'
+import { Home, Plus, ChevronRight, ClipboardList } from 'lucide-react'
 
 interface RecurringTask {
   id: string
@@ -69,10 +69,10 @@ export default function ManageTasksPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b border-border flex items-center gap-3 px-2 h-14">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/tasks')}
           className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
-          <ArrowLeft size={20} strokeWidth={2.5} />
+          <Home size={18} strokeWidth={2} />
         </button>
         <h1 className="font-semibold text-foreground flex-1">Manage tasks</h1>
         <button

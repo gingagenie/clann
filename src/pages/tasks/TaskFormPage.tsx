@@ -5,6 +5,7 @@ import { useHousehold } from '@/contexts/HouseholdContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 
@@ -19,6 +20,12 @@ const ALL_DAYS = [
 ]
 
 type RepeatType = 'weekly' | 'monthly' | 'one_off'
+type AdvanceType = 'same_day' | 'night_before'
+
+const ADVANCE_OPTIONS: { key: AdvanceType; label: string }[] = [
+  { key: 'same_day',    label: 'Same day'     },
+  { key: 'night_before', label: 'Night before' },
+]
 
 const REPEAT_OPTIONS: { key: RepeatType; label: string }[] = [
   { key: 'weekly',  label: 'Weekly'  },
@@ -63,6 +70,10 @@ export default function TaskFormPage() {
   const [dayOfMonth,   setDayOfMonth]   = useState<number | null>(null)
   const [oneOffDate,   setOneOffDate]   = useState('')
   const [assignedTo,   setAssignedTo]   = useState<string | null>(null)
+  const [reminder,     setReminder]     = useState(false)
+  const [remHour,      setRemHour]      = useState('08')
+  const [remMinute,    setRemMinute]    = useState('00')
+  const [advance,      setAdvance]      = useState<AdvanceType>('same_day')
   const [saving,       setSaving]       = useState(false)
   const [deleting,     setDeleting]     = useState(false)
   const [error,        setError]        = useState<string | null>(null)
@@ -83,6 +94,13 @@ export default function TaskFormPage() {
         setDayOfMonth(data.day_of_month ?? null)
         setOneOffDate(data.one_off_date ?? '')
         setAssignedTo(data.assigned_to ?? null)
+        setReminder(data.reminder_enabled ?? false)
+        if (data.reminder_time) {
+          const [h, m] = (data.reminder_time as string).split(':')
+          setRemHour(h ?? '08')
+          setRemMinute(m ?? '00')
+        }
+        setAdvance((data.reminder_advance as AdvanceType) ?? 'same_day')
         setLoading(false)
       })
   }, [id, navigate])
@@ -109,15 +127,21 @@ export default function TaskFormPage() {
     setSaving(true)
     setError(null)
 
+    const reminderTime = reminder
+      ? `${remHour.padStart(2, '0')}:${remMinute.padStart(2, '0')}:00`
+      : null
+
     const payload = {
-      household_id:  household.id,
-      name:          name.trim(),
+      household_id:     household.id,
+      name:             name.trim(),
       repeat,
-      days_of_week:  repeat === 'weekly'  ? selectedDays : [],
-      day_of_month:  repeat === 'monthly' ? dayOfMonth   : null,
-      one_off_date:  repeat === 'one_off' ? oneOffDate   : null,
-      assigned_to:   assignedTo,
-      // clear reminder fields (not changing them on edit)
+      days_of_week:     repeat === 'weekly'  ? selectedDays : [],
+      day_of_month:     repeat === 'monthly' ? dayOfMonth   : null,
+      one_off_date:     repeat === 'one_off' ? oneOffDate   : null,
+      assigned_to:      assignedTo,
+      reminder_enabled: reminder,
+      reminder_time:    reminderTime,
+      reminder_advance: reminder ? advance : null,
     }
 
     const { error: dbErr } = isEdit
@@ -286,6 +310,63 @@ export default function TaskFormPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Reminder */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="reminder-toggle">Reminder</Label>
+            <Switch
+              id="reminder-toggle"
+              checked={reminder}
+              onCheckedChange={setReminder}
+            />
+          </div>
+
+          {reminder && (
+            <div className="space-y-4 pl-1">
+              <div className="space-y-1.5">
+                <Label className="text-muted-foreground text-xs">Time</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    className="w-16 text-center font-bold text-lg"
+                    value={remHour}
+                    onChange={e => setRemHour(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    maxLength={2}
+                    placeholder="08"
+                  />
+                  <span className="text-xl font-bold text-muted-foreground">:</span>
+                  <Input
+                    className="w-16 text-center font-bold text-lg"
+                    value={remMinute}
+                    onChange={e => setRemMinute(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                    maxLength={2}
+                    placeholder="00"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-muted-foreground text-xs">Remind me</Label>
+                <div className="flex gap-2">
+                  {ADVANCE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setAdvance(opt.key)}
+                      className={cn(
+                        'flex-1 py-2 rounded-xl border text-sm font-medium transition-colors',
+                        advance === opt.key
+                          ? 'bg-primary border-primary text-primary-foreground'
+                          : 'border-border text-muted-foreground hover:border-primary/40',
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {error && (
