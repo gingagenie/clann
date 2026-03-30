@@ -13,7 +13,7 @@ import { mergeQuantity } from '@/lib/quantities'
 import { categorise } from '@/lib/categorise'
 import {
   ChevronLeft, ChevronRight, UtensilsCrossed, Pencil,
-  Trash2, ShoppingCart, Check, ArrowLeft, Search, ChefHat,
+  Trash2, ShoppingCart, Check, ArrowLeft, Search, ChefHat, Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -140,6 +140,8 @@ interface MealPickerProps {
 function MealPicker({ date, meal, recipes, onSave, onDelete, onClose }: MealPickerProps) {
   const isEditing = !!meal
 
+  const { household } = useHousehold()
+
   const [mode,          setMode]          = useState<PickerMode>(isEditing ? 'edit' : 'choice')
   const [search,        setSearch]        = useState('')
   const [title,         setTitle]         = useState(meal?.title ?? '')
@@ -149,6 +151,66 @@ function MealPicker({ date, meal, recipes, onSave, onDelete, onClose }: MealPick
   const [saving,        setSaving]        = useState(false)
   const [deleting,      setDeleting]      = useState(false)
   const [error,         setError]         = useState<string | null>(null)
+
+  const [showAI,      setShowAI]      = useState(false)
+  const [aiQuery,     setAiQuery]     = useState('')
+  const [aiSearching, setAiSearching] = useState(false)
+  const [aiError,     setAiError]     = useState<string | null>(null)
+
+  async function handleAISearch() {
+    const q = aiQuery.trim()
+    if (!q || !household) return
+    setAiSearching(true)
+    setAiError(null)
+
+    const { data, error: fnError } = await supabase.functions.invoke('recipe-search', {
+      body: { meal: q },
+    })
+
+    if (fnError || !data?.ingredients) {
+      setAiError(fnError?.message ?? data?.error ?? 'No result. Try again.')
+      setAiSearching(false)
+      return
+    }
+
+    const ingredients = (data.ingredients as { name: string; quantity: string }[]).filter(i => i.name.trim())
+
+    // Save as a new recipe
+    const { data: recipeData, error: recipeErr } = await supabase
+      .from('recipes')
+      .insert({ household_id: household.id, title: q.trim(), notes: null })
+      .select()
+      .single()
+
+    if (recipeErr || !recipeData) {
+      setAiError(recipeErr?.message ?? 'Failed to save recipe.')
+      setAiSearching(false)
+      return
+    }
+
+    const newId = (recipeData as any).id as string
+    if (ingredients.length > 0) {
+      await supabase.from('recipe_ingredients').insert(
+        ingredients.map((i, idx) => ({ recipe_id: newId, name: i.name, quantity: i.quantity || null, sort_order: idx }))
+      )
+    }
+
+    setAiSearching(false)
+    setShowAI(false)
+    setAiQuery('')
+
+    // Select the new recipe
+    const newRecipe: Recipe = {
+      id: newId,
+      household_id: household.id,
+      title: q.trim(),
+      notes: null,
+      is_starter: false,
+      created_at: new Date().toISOString(),
+      ingredients: ingredients.map((i, idx) => ({ id: '', recipe_id: newId, name: i.name, quantity: i.quantity || null, sort_order: idx })),
+    }
+    handleSelectRecipe(newRecipe)
+  }
 
   const yourRecipes    = recipes.filter(r => !r.is_starter)
   const starterRecipes = recipes.filter(r => r.is_starter)
@@ -246,17 +308,55 @@ function MealPicker({ date, meal, recipes, onSave, onDelete, onClose }: MealPick
       {/* ── Recipe list ── */}
       {mode === 'recipe-list' && (
         <div className="flex-1 flex flex-col overflow-hidden max-w-lg mx-auto w-full">
-          <div className="px-4 py-3 border-b border-border shrink-0">
-            <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search recipes…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-9"
-                autoFocus
-              />
+          <div className="px-4 py-3 border-b border-border shrink-0 space-y-2">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search recipes…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="pl-9"
+                  autoFocus={!showAI}
+                />
+              </div>
+              <button
+                onClick={() => { setShowAI(v => !v); setAiError(null) }}
+                className={cn(
+                  'w-10 h-10 flex items-center justify-center rounded-xl border transition-colors shrink-0',
+                  showAI
+                    ? 'bg-primary border-primary text-primary-foreground'
+                    : 'border-border text-muted-foreground hover:border-primary/40 hover:text-primary',
+                )}
+              >
+                <Sparkles size={16} />
+              </button>
             </div>
+            {showAI && (
+              <div className="space-y-1.5">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="e.g. Chicken Tikka Masala"
+                    value={aiQuery}
+                    onChange={e => setAiQuery(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') void handleAISearch() }}
+                    autoFocus
+                    className="flex-1"
+                  />
+                  <button
+                    onClick={() => void handleAISearch()}
+                    disabled={aiSearching || !aiQuery.trim()}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:border-primary/40 hover:text-primary disabled:opacity-40 transition-colors shrink-0"
+                  >
+                    {aiSearching
+                      ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      : <Sparkles size={15} />
+                    }
+                  </button>
+                </div>
+                {aiError && <p className="text-xs text-destructive">{aiError}</p>}
+              </div>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5">
