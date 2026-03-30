@@ -37,7 +37,7 @@ const REPEAT_OPTIONS: { key: RepeatType; label: string }[] = [
 function DayOfMonthPicker({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
   return (
     <div className="grid grid-cols-7 gap-1.5">
-      {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
+      {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
         <button
           key={d}
           onClick={() => onChange(d)}
