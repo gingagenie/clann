@@ -342,21 +342,24 @@ export default function TaskFormPage() {
               <div className="space-y-1.5">
                 <Label className="text-muted-foreground text-xs">Time</Label>
                 <div className="flex items-center gap-2">
-                  <Input
-                    className="w-16 text-center font-bold text-lg"
+                  <select
                     value={remHour}
-                    onChange={e => setRemHour(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                    maxLength={2}
-                    placeholder="08"
-                  />
+                    onChange={e => setRemHour(e.target.value)}
+                    className="flex-1 h-10 rounded-xl border border-border bg-background px-3 text-sm font-semibold text-foreground"
+                  >
+                    {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h => (
+                      <option key={h} value={h}>{h}</option>
+                    ))}
+                  </select>
                   <span className="text-xl font-bold text-muted-foreground">:</span>
-                  <Input
-                    className="w-16 text-center font-bold text-lg"
+                  <select
                     value={remMinute}
-                    onChange={e => setRemMinute(e.target.value.replace(/\D/g, '').slice(0, 2))}
-                    maxLength={2}
-                    placeholder="00"
-                  />
+                    onChange={e => setRemMinute(e.target.value)}
+                    className="flex-1 h-10 rounded-xl border border-border bg-background px-3 text-sm font-semibold text-foreground"
+                  >
+                    <option value="00">00</option>
+                    <option value="30">30</option>
+                  </select>
                 </div>
               </div>
 
