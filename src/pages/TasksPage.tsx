@@ -7,35 +7,49 @@ import {
   toDateString, formatWeekRange, DAY_SHORT,
 } from '@/lib/dates'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Check, Settings2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import TaskEditSheet from '@/components/tasks/TaskEditSheet'
 
 // ── Task row ───────────────────────────────────────────────────
 
-function TaskRow({ task, onToggle, isToday }: { task: WeekTask; onToggle: () => void; isToday: boolean }) {
+function TaskRow({
+  task, onToggle, onEdit, isToday,
+}: {
+  task: WeekTask
+  onToggle: () => void
+  onEdit: () => void
+  isToday: boolean
+}) {
   return (
-    <button
-      onClick={e => { e.stopPropagation(); onToggle() }}
-      className="flex items-center gap-3 w-full text-left group py-0.5"
-    >
-      <span className={cn(
-        'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
-        task.completed
-          ? 'bg-primary border-primary'
-          : isToday
-            ? 'border-primary/40 group-hover:border-primary'
-            : 'border-border group-hover:border-primary/50',
-      )}>
+    <div className="flex items-center gap-3 w-full py-0.5">
+      {/* Checkbox — toggles completion */}
+      <button
+        onClick={e => { e.stopPropagation(); onToggle() }}
+        className={cn(
+          'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+          task.completed
+            ? 'bg-primary border-primary'
+            : isToday
+              ? 'border-primary/40'
+              : 'border-border',
+        )}
+      >
         {task.completed && <Check size={10} strokeWidth={3.5} className="text-primary-foreground" />}
-      </span>
-      <span className={cn(
-        'text-sm transition-colors leading-snug',
-        task.completed
-          ? 'line-through text-muted-foreground'
-          : isToday ? 'text-foreground font-medium' : 'text-foreground',
-      )}>
+      </button>
+
+      {/* Name — opens edit sheet */}
+      <button
+        onClick={e => { e.stopPropagation(); onEdit() }}
+        className={cn(
+          'flex-1 text-sm text-left leading-snug transition-colors',
+          task.completed
+            ? 'line-through text-muted-foreground'
+            : isToday ? 'text-foreground font-medium' : 'text-foreground',
+        )}
+      >
         {task.name}
-      </span>
-    </button>
+      </button>
+    </div>
   )
 }
 
@@ -47,13 +61,17 @@ interface DayCardProps {
   isPast: boolean
   tasks: WeekTask[]
   onToggleTask: (id: string, completed: boolean) => void
+  onEditTask: (task: WeekTask) => void
   onTap: () => void
 }
 
-function DayCard({ date, isToday, isPast, tasks, onToggleTask, onTap }: DayCardProps) {
+function DayCard({ date, isToday, isPast, tasks, onToggleTask, onEditTask, onTap }: DayCardProps) {
   if (isToday) {
     return (
-      <div onClick={onTap} className="rounded-2xl overflow-hidden shadow-md border border-primary/20 bg-card cursor-pointer active:scale-[0.99] transition-transform">
+      <div
+        onClick={onTap}
+        className="rounded-2xl overflow-hidden shadow-md border border-primary/20 bg-card cursor-pointer active:scale-[0.99] transition-transform"
+      >
         <div className="bg-primary px-4 py-3 flex items-center gap-3">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-black text-primary-foreground leading-none">{date.getDate()}</span>
@@ -67,7 +85,13 @@ function DayCard({ date, isToday, isPast, tasks, onToggleTask, onTap }: DayCardP
           {tasks.length === 0
             ? <span className="text-sm text-muted-foreground">Nothing on — enjoy it 🌿</span>
             : tasks.map(task => (
-                <TaskRow key={task.id} task={task} isToday onToggle={() => onToggleTask(task.id, task.completed)} />
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  isToday
+                  onToggle={() => onToggleTask(task.id, task.completed)}
+                  onEdit={() => onEditTask(task)}
+                />
               ))
           }
         </div>
@@ -94,7 +118,13 @@ function DayCard({ date, isToday, isPast, tasks, onToggleTask, onTap }: DayCardP
           {tasks.length === 0
             ? <span className="text-sm text-muted-foreground/60">No tasks</span>
             : tasks.map(task => (
-                <TaskRow key={task.id} task={task} isToday={false} onToggle={() => onToggleTask(task.id, task.completed)} />
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  isToday={false}
+                  onToggle={() => onToggleTask(task.id, task.completed)}
+                  onEdit={() => onEditTask(task)}
+                />
               ))
           }
         </div>
@@ -106,11 +136,12 @@ function DayCard({ date, isToday, isPast, tasks, onToggleTask, onTap }: DayCardP
 // ── Tasks page ─────────────────────────────────────────────────
 
 export default function TasksPage() {
-  const navigate = useNavigate()
+  const navigate     = useNavigate()
   const { household } = useHousehold()
   const weekStartDay = household?.week_start_day ?? 'monday'
 
   const [weekOffset, setWeekOffset] = useState(0)
+  const [editingTask, setEditingTask] = useState<WeekTask | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   const today      = startOfDay(new Date())
@@ -120,7 +151,7 @@ export default function TasksPage() {
   const days       = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const isCurrentWeek = weekOffset === 0
 
-  const { tasks, toggleComplete } = useWeekTasks(days)
+  const { tasks, toggleComplete, refresh } = useWeekTasks(days)
 
   useEffect(() => {
     if (!isCurrentWeek || !listRef.current) return
@@ -165,12 +196,6 @@ export default function TasksPage() {
           >
             <ChevronRight size={20} strokeWidth={2.5} />
           </button>
-          <button
-            onClick={() => navigate('/tasks/manage')}
-            className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <Settings2 size={18} strokeWidth={2} />
-          </button>
         </div>
       </div>
 
@@ -184,11 +209,21 @@ export default function TasksPage() {
             isPast={day < today && !isSameDay(day, today)}
             tasks={tasksForDay(day)}
             onToggleTask={toggleComplete}
+            onEditTask={setEditingTask}
             onTap={() => navigate(`/tasks/add?date=${toDateString(day)}`)}
           />
         ))}
         <div className="h-4" />
       </div>
+
+      {/* Task edit bottom sheet */}
+      {editingTask && (
+        <TaskEditSheet
+          recurringTaskId={editingTask.recurring_task_id}
+          onClose={() => setEditingTask(null)}
+          onSaved={refresh}
+        />
+      )}
     </div>
   )
 }
