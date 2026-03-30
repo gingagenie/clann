@@ -14,6 +14,7 @@ import RecipesPage from '@/pages/RecipesPage'
 import ShoppingPage from '@/pages/ShoppingPage'
 import SettingsPage from '@/pages/SettingsPage'
 import TaskFormPage from '@/pages/tasks/TaskFormPage'
+import SchoolPage from '@/pages/SchoolPage'
 
 type HouseholdPath = 'choose' | 'new' | 'join'
 
@@ -52,6 +53,7 @@ function AppRoutes() {
       </Route>
       {/* Full-screen pages outside the tab shell */}
       <Route path="/tasks/add"       element={<TaskFormPage />} />
+      <Route path="/school"          element={<SchoolPage />} />
     </Routes>
   )
 }

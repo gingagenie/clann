@@ -327,7 +327,7 @@ export default function HomePage() {
         {/* ── School card (full width) ── */}
         <div className="mt-3">
           <button
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate(household?.state ? '/school' : '/settings')}
             className="w-full rounded-2xl overflow-hidden active:scale-[0.97] transition-transform text-left"
             style={{ background: '#f5f0e8', border: '3px solid #3a5c2e' }}
           >
