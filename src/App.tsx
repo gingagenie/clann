@@ -8,6 +8,7 @@ import OnboardingPage from '@/pages/onboarding/OnboardingPage'
 import JoinPage from '@/pages/onboarding/JoinPage'
 import AppShell from '@/components/layout/AppShell'
 import HomePage from '@/pages/HomePage'
+import TasksPage from '@/pages/TasksPage'
 import MealsPage from '@/pages/MealsPage'
 import RecipesPage from '@/pages/RecipesPage'
 import ShoppingPage from '@/pages/ShoppingPage'
@@ -42,6 +43,7 @@ function AppRoutes() {
     <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/tasks" element={<TasksPage />} />
         <Route path="/meals" element={<MealsPage />} />
         <Route path="/recipes" element={<RecipesPage />} />
         <Route path="/shopping" element={<ShoppingPage />} />

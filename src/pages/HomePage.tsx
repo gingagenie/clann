@@ -4,12 +4,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useHousehold } from '@/contexts/HouseholdContext'
 import { useWeekTasks, type WeekTask } from '@/hooks/useWeekTasks'
 import { useMealPlans } from '@/hooks/useMealPlans'
+import { useShoppingList } from '@/hooks/useShoppingList'
 import {
   startOfDay, addDays, isSameDay, getWeekStart,
   toDateString, formatWeekRange, DAY_SHORT, MONTHS,
 } from '@/lib/dates'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Plus, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Check, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 // ── Helpers ─────────────────────────────────────────────────────
@@ -40,6 +41,45 @@ function timeGreeting(hour: number): string {
   if (hour < 17) return 'Good afternoon'
   if (hour < 21) return 'Good evening'
   return 'Hey'
+}
+
+// ── Shopping snapshot ───────────────────────────────────────────
+
+interface ShoppingSnapshotProps {
+  items: { id: string; name: string; checked: boolean }[]
+  onViewAll: () => void
+}
+
+function ShoppingSnapshot({ items, onViewAll }: ShoppingSnapshotProps) {
+  const unchecked = items.filter(i => !i.checked)
+
+  return (
+    <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <ShoppingCart size={15} className="text-muted-foreground" />
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Shopping list</p>
+        </div>
+        <button onClick={onViewAll} className="text-xs font-semibold text-primary hover:underline">
+          View all
+        </button>
+      </div>
+      <div className="px-4 py-3">
+        {unchecked.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nothing on the list</p>
+        ) : (
+          <div className="space-y-1.5">
+            {unchecked.slice(0, 4).map(item => (
+              <p key={item.id} className="text-sm text-foreground">{item.name}</p>
+            ))}
+            {unchecked.length > 4 && (
+              <p className="text-xs text-muted-foreground">+{unchecked.length - 4} more</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 // ── Task row ───────────────────────────────────────────────────
@@ -141,6 +181,7 @@ export default function HomePage() {
 
   const { tasks, toggleComplete } = useWeekTasks(days)
   const { meals }                 = useMealPlans(days)
+  const { items: shoppingItems }  = useShoppingList()
 
   const myMember  = members.find(m => m.auth_user_id === user?.id)
   const firstName = myMember?.name?.split(' ')[0] ?? ''
@@ -283,6 +324,9 @@ export default function HomePage() {
                 onToggleTask={toggleComplete}
               />
             ))}
+
+            {/* Shopping snapshot */}
+            <ShoppingSnapshot items={shoppingItems} onViewAll={() => navigate('/shopping')} />
           </>
         ) : (
           // Other weeks — all 7 as compact rows
