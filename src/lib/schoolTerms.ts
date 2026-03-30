@@ -17,7 +17,7 @@ export interface TermStatus {
 
 /** Return the term list for a given state + year, or null if not available. */
 export function getTerms(state: AustralianState, year: number): SchoolTerm[] | null {
-  const stateData = (termData as Record<string, Record<string, SchoolTerm[]>>)[state]
+  const stateData = (termData as unknown as Record<string, Record<string, SchoolTerm[]>>)[state]
   if (!stateData) return null
   return stateData[String(year)] ?? null
 }
