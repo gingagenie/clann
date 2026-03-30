@@ -39,15 +39,39 @@ export function useWeekTasks(weekDays: Date[]) {
       if (rErr) { console.warn('[useWeekTasks] recurring error:', rErr.message); return }
 
       // Determine which (task, date) pairs should exist this week
-      const expected = (recurring ?? []).flatMap((rt: { id: string; days_of_week: string[] }) =>
-        weekDays
+      type RT = {
+        id: string
+        days_of_week: string[]
+        repeat?: string
+        one_off_date?: string | null
+        day_of_month?: number | null
+      }
+      const expected = (recurring ?? []).flatMap((rt: RT) => {
+        const rep = rt.repeat ?? 'weekly'
+
+        if (rep === 'one_off' && rt.one_off_date) {
+          const match = weekDays.find(d => toDateString(d) === rt.one_off_date)
+          return match
+            ? [{ recurring_task_id: rt.id, due_date: rt.one_off_date!, household_id: household.id }]
+            : []
+        }
+
+        if (rep === 'monthly' && rt.day_of_month) {
+          const match = weekDays.find(d => d.getDate() === rt.day_of_month)
+          return match
+            ? [{ recurring_task_id: rt.id, due_date: toDateString(match), household_id: household.id }]
+            : []
+        }
+
+        // weekly (default)
+        return weekDays
           .filter(day => rt.days_of_week.includes(DAY_NAMES[day.getDay()]))
           .map(day => ({
             recurring_task_id: rt.id,
             due_date: toDateString(day),
             household_id: household.id,
           }))
-      )
+      })
 
       // Upsert — ignore existing rows
       if (expected.length > 0) {

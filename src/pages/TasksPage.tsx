@@ -7,7 +7,7 @@ import {
   toDateString, formatWeekRange, DAY_SHORT,
 } from '@/lib/dates'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Plus, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Check, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 // ── Task row ───────────────────────────────────────────────────
@@ -158,6 +158,12 @@ export default function TasksPage() {
             className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <ChevronRight size={20} strokeWidth={2.5} />
+          </button>
+          <button
+            onClick={() => navigate('/tasks/manage')}
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <Settings2 size={18} strokeWidth={2} />
           </button>
         </div>
       </div>
