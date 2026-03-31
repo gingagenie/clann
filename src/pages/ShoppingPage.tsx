@@ -37,23 +37,22 @@ export default function ShoppingPage() {
     <div className="flex flex-col h-full">
       {/* Add item bar */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-3 py-3 max-w-lg mx-auto w-full">
-        <div className="flex gap-2">
+        <form onSubmit={e => { e.preventDefault(); void handleAdd() }} className="flex gap-2">
           <Input
             ref={inputRef}
             placeholder="Add an item…"
             value={name}
             onChange={e => setName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
             className="flex-1"
           />
           <Button
+            type="submit"
             size="icon"
-            onClick={handleAdd}
             disabled={adding || !name.trim()}
           >
             <Plus size={18} />
           </Button>
-        </div>
+        </form>
       </div>
 
       {/* List */}
