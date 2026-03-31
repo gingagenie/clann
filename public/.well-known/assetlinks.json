@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.clann.twa",
+    "sha256_cert_fingerprints": [
+      "12:19:6E:F3:71:03:B0:05:64:6D:E8:7D:73:6E:EA:80:81:EE:1A:6E:84:34:CB:18:85:A6:C0:DC:48:22:6C:B7"
+    ]
+  }
+}]
