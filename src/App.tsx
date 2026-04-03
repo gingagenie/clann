@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useHousehold } from '@/contexts/HouseholdContext'
+import { useTaskReminders } from '@/hooks/useTaskReminders'
 import AuthPage from '@/pages/AuthPage'
 import HouseholdChoicePage from '@/pages/onboarding/HouseholdChoicePage'
 import OnboardingPage from '@/pages/onboarding/OnboardingPage'
@@ -30,6 +31,7 @@ function AppRoutes() {
   const { session, loading: authLoading } = useAuth()
   const { household, initialized } = useHousehold()
   const [path, setPath] = useState<HouseholdPath>('choose')
+  useTaskReminders()
 
   if (authLoading || !initialized) return <LoadingScreen />
   if (!session) return <AuthPage />

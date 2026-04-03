@@ -357,8 +357,9 @@ export default function TaskFormPage() {
                     onChange={e => setRemMinute(e.target.value)}
                     className="flex-1 h-10 rounded-xl border border-border bg-background px-3 text-sm font-semibold text-foreground"
                   >
-                    <option value="00">00</option>
-                    <option value="30">30</option>
+                    {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
                   </select>
                 </div>
               </div>
