@@ -48,7 +48,7 @@ function isReminderWindow(task: any, hour: number, minute: number): boolean {
   const [rh, rm] = (task.reminder_time as string).split(':').map(Number)
   const taskMins    = rh * 60 + rm
   const currentMins = hour * 60 + minute
-  return Math.abs(taskMins - currentMins) <= 16
+  return Math.abs(taskMins - currentMins) <= 1
 }
 
 Deno.serve(async () => {
