@@ -28,7 +28,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function SettingsPage() {
   const { user, signOut }                       = useAuth()
   const { household, members, updateHousehold, refresh } = useHousehold()
-  const { enabled, loading, supported, toggle, scheduleTest } = usePushNotifications()
+  const { enabled, loading, supported, permissionDenied, toggle, scheduleTest } = usePushNotifications()
   const { canInstall, isIOSSafari, isInstalled, install } = usePWAInstall()
 
   const [copied, setCopied] = useState(false)
@@ -287,6 +287,13 @@ export default function SettingsPage() {
               </div>
               <Switch checked={enabled} onCheckedChange={toggle} disabled={loading} />
             </div>
+            {permissionDenied && (
+              <div className="px-4 pb-3.5">
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Notifications are blocked. Go to <strong>Settings &gt; Apps &gt; Clann &gt; Notifications</strong> on your phone to allow them.
+                </p>
+              </div>
+            )}
             {enabled && (
               <div className="px-4 pb-3">
                 <button

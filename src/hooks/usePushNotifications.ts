@@ -15,18 +15,34 @@ function urlBase64ToUint8Array(base64: string): ArrayBuffer {
   return arr.buffer
 }
 
+// Safe wrappers — TWA on Android may not expose window.Notification even when
+// PushManager is available, so we guard all access to avoid ReferenceErrors.
+function getNotificationPermission(): NotificationPermission | null {
+  try { return typeof Notification !== 'undefined' ? Notification.permission : null }
+  catch { return null }
+}
+
+async function requestNotificationPermission(): Promise<NotificationPermission> {
+  try {
+    if (typeof Notification === 'undefined') return 'denied'
+    return await Notification.requestPermission()
+  } catch { return 'denied' }
+}
+
 export function usePushNotifications() {
   const { user }      = useAuth()
   const { household } = useHousehold()
-  const [enabled,   setEnabled]   = useState(false)
-  const [loading,   setLoading]   = useState(false)
-  const [supported, setSupported] = useState(false)
+  const [enabled,          setEnabled]          = useState(false)
+  const [loading,          setLoading]          = useState(false)
+  const [supported,        setSupported]        = useState(false)
+  const [permissionDenied, setPermissionDenied] = useState(false)
 
   useEffect(() => {
+    // Don't gate on 'Notification' in window — TWA may omit it while still
+    // supporting PushManager (service worker handles the actual display).
     const ok = typeof window !== 'undefined'
       && 'serviceWorker' in navigator
       && 'PushManager' in window
-      && 'Notification' in window
     setSupported(ok)
     if (ok) void checkStatus()
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,6 +53,7 @@ export function usePushNotifications() {
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.getSubscription()
       setEnabled(!!sub)
+      if (getNotificationPermission() === 'denied') setPermissionDenied(true)
     } catch { /* browser restriction */ }
   }
 
@@ -83,9 +100,11 @@ export function usePushNotifications() {
         }
         setEnabled(false)
       } else {
-        const permission = await Notification.requestPermission()
+        const permission = await requestNotificationPermission()
+        if (permission === 'denied') { setPermissionDenied(true); return }
         if (permission !== 'granted') return
 
+        setPermissionDenied(false)
         const reg = await navigator.serviceWorker.ready
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
@@ -111,13 +130,13 @@ export function usePushNotifications() {
   // ── Test via SW waitUntil ───────────────────────────────────────
 
   const scheduleTest = useCallback(async (minutes = 1) => {
-    if (Notification.permission !== 'granted') {
-      const perm = await Notification.requestPermission()
+    if (getNotificationPermission() !== 'granted') {
+      const perm = await requestNotificationPermission()
       if (perm !== 'granted') return
     }
     const reg = await navigator.serviceWorker.ready
     reg.active?.postMessage({ type: 'SCHEDULE_TEST', delayMs: minutes * 60_000 })
   }, [])
 
-  return { enabled, loading, supported, toggle, scheduleTest }
+  return { enabled, loading, supported, permissionDenied, toggle, scheduleTest }
 }
