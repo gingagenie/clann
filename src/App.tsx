@@ -15,6 +15,7 @@ import ShoppingPage from '@/pages/ShoppingPage'
 import SettingsPage from '@/pages/SettingsPage'
 import TaskFormPage from '@/pages/tasks/TaskFormPage'
 import SchoolPage from '@/pages/SchoolPage'
+import ChoresPage from '@/pages/ChoresPage'
 
 type HouseholdPath = 'choose' | 'new' | 'join'
 
@@ -45,6 +46,7 @@ function AppRoutes() {
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/chores" element={<ChoresPage />} />
         <Route path="/meals" element={<MealsPage />} />
         <Route path="/recipes" element={<RecipesPage />} />
         <Route path="/shopping" element={<ShoppingPage />} />

@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { Home, ListTodo, UtensilsCrossed, ShoppingCart, Settings } from 'lucide-react'
+import { Home, ListTodo, UtensilsCrossed, ShoppingCart, Settings, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TABS = [
   { to: '/',         icon: Home,            label: 'Home' },
   { to: '/tasks',    icon: ListTodo,        label: 'Tasks' },
+  { to: '/chores',   icon: Star,            label: 'Chores' },
   { to: '/meals',    icon: UtensilsCrossed, label: 'Meals' },
   { to: '/shopping', icon: ShoppingCart,    label: 'Shopping' },
   { to: '/settings', icon: Settings,        label: 'Settings' },
