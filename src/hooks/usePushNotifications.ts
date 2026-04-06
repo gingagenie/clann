@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useHousehold } from '@/contexts/HouseholdContext'
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+const VAPID_PUBLIC_KEY = 'BIsEMxwPNvcY6lZrJG7rgrVgOXk_aQzv5R5TGpzoyUgI35CofGnFQp06aidaAQc4hfNjzKt4EJrBTjfwHtcX9t4'
 const REMINDED_PFX     = 'clann_reminded_'
 
 function urlBase64ToUint8Array(base64: string): ArrayBuffer {
