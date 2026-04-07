@@ -114,11 +114,9 @@ export function usePushNotifications() {
         const isNative = !!(window as any).__isNativeApp || !!(window as any).ReactNativeWebView
         if (isNative) {
           await new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('Native push registration timed out')), 15000)
-            window.addEventListener('nativePushRegistered', () => {
-              clearTimeout(timeout)
-              resolve()
-            }, { once: true })
+            const timeout = setTimeout(() => reject(new Error('Timed out — no response from native layer')), 15000)
+            window.addEventListener('nativePushRegistered', () => { clearTimeout(timeout); resolve() }, { once: true })
+            window.addEventListener('nativePushError', (e: any) => { clearTimeout(timeout); reject(new Error('Native error: ' + (e.detail ?? 'unknown'))) }, { once: true })
             ;(window as any).ReactNativeWebView?.postMessage(JSON.stringify({
               type: 'REGISTER_PUSH',
               userId: user.id,
