@@ -35,12 +35,15 @@ export function usePushNotifications() {
   const [swStatus,         setSwStatus]         = useState<'unknown' | 'active' | 'inactive'>('unknown')
 
   useEffect(() => {
-    const ok = typeof window !== 'undefined'
+    const isNative = typeof window !== 'undefined' && !!(window as any).__isNativeApp
+    const ok = isNative || (
+      typeof window !== 'undefined'
       && 'serviceWorker' in navigator
       && 'PushManager' in window
+    )
     setSupported(ok)
-    if (ok && user?.id) void checkStatus()
-    if (ok) {
+    if (user?.id) void checkStatus()
+    if (!isNative && ok) {
       navigator.serviceWorker.ready.then(reg => {
         setSwStatus(reg.active ? 'active' : 'inactive')
       }).catch(() => setSwStatus('inactive'))
