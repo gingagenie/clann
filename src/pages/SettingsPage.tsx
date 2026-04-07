@@ -308,8 +308,15 @@ export default function SettingsPage() {
                 </p>
                 <button
                   onClick={async () => {
-                    const reg = await navigator.serviceWorker.ready
-                    reg.showNotification('Direct test', { body: 'Called from page, not SW' })
+                    try {
+                      const perm = typeof Notification !== 'undefined' ? Notification.permission : 'undefined'
+                      const reg = await navigator.serviceWorker.ready
+                      await reg.showNotification('Direct test', { body: `perm=${perm}` })
+                      alert('OK — perm=' + perm)
+                    } catch (e: any) {
+                      const perm = typeof Notification !== 'undefined' ? Notification.permission : 'undefined'
+                      alert('FAILED: ' + (e?.message ?? String(e)) + ' | perm=' + perm)
+                    }
                   }}
                   className="text-xs text-muted-foreground hover:text-primary transition-colors"
                 >
