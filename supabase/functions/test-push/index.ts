@@ -88,7 +88,10 @@ Deno.serve(async () => {
           message: {
             token: sub.endpoint,
             data: { title: 'Test notification', body: 'Firebase is working!', url: '/tasks' },
-            webpush: { headers: { Urgency: 'high' } },
+            webpush: {
+              headers:      { Urgency: 'high' },
+              notification: { title: 'Test notification', body: 'Firebase is working!', icon: '/icons/icon-192.png' },
+            },
           },
         }),
       }

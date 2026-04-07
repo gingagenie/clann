@@ -108,7 +108,10 @@ async function sendFcm(
         message: {
           token,
           data:    { title, body, url },
-          webpush: { headers: { Urgency: 'high' } },
+          webpush: {
+            headers:      { Urgency: 'high' },
+            notification: { title, body, icon: '/icons/icon-192.png' },
+          },
         },
       }),
     },
