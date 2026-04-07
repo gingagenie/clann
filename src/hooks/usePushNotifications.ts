@@ -1,19 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
+import { getToken, deleteToken } from 'firebase/messaging'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useHousehold } from '@/contexts/HouseholdContext'
+import { messagingPromise } from '@/lib/firebase'
 
-const VAPID_PUBLIC_KEY = 'BIsEMxwPNvcY6lZrJG7rgrVgOXk_aQzv5R5TGpzoyUgI35CofGnFQp06aidaAQc4hfNjzKt4EJrBTjfwHtcX9t4'
-const REMINDED_PFX     = 'clann_reminded_'
+// Firebase Web Push certificate public key (from Firebase Console → Cloud Messaging)
+const VAPID_KEY = 'BBW6345OeVTtJc4EqD5c5PBi8vbhzUUg_L-G4ofq2eKGfIOzij_ewKcPau7OeRMU_X0qEIz026iCKFB8vLsJSSs'
 
-function urlBase64ToUint8Array(base64: string): ArrayBuffer {
-  const padding = '='.repeat((4 - (base64.length % 4)) % 4)
-  const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const raw = atob(b64)
-  const arr = new Uint8Array(raw.length)
-  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
-  return arr.buffer
-}
+const REMINDED_PFX = 'clann_reminded_'
 
 // Safe wrappers — TWA on Android may not expose window.Notification even when
 // PushManager is available, so we guard all access to avoid ReferenceErrors.
@@ -38,23 +33,26 @@ export function usePushNotifications() {
   const [permissionDenied, setPermissionDenied] = useState(false)
 
   useEffect(() => {
-    // Don't gate on 'Notification' in window — TWA may omit it while still
-    // supporting PushManager (service worker handles the actual display).
     const ok = typeof window !== 'undefined'
       && 'serviceWorker' in navigator
       && 'PushManager' in window
     setSupported(ok)
-    if (ok) void checkStatus()
+    if (ok && user?.id) void checkStatus()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   async function checkStatus() {
+    if (!user?.id) return
     try {
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.getSubscription()
-      setEnabled(!!sub)
+      // Check DB for any active subscription for this user
+      const { data } = await supabase
+        .from('push_subscriptions')
+        .select('endpoint')
+        .eq('user_id', user.id)
+        .limit(1)
+      setEnabled((data?.length ?? 0) > 0)
       if (getNotificationPermission() === 'denied') setPermissionDenied(true)
-    } catch { /* browser restriction */ }
+    } catch { /* ignore */ }
   }
 
   // ── Foreground fallback: fire at 5pm if app is open ────────────
@@ -85,39 +83,44 @@ export function usePushNotifications() {
   // ── Toggle ──────────────────────────────────────────────────────
 
   const toggle = useCallback(async () => {
-    if (!user || !household || !VAPID_PUBLIC_KEY) {
-      console.warn('[usePushNotifications] missing VAPID key or user/household')
-      return
-    }
+    if (!user || !household) return
     setLoading(true)
     try {
       if (enabled) {
-        const reg = await navigator.serviceWorker.ready
-        const sub = await reg.pushManager.getSubscription()
-        if (sub) {
-          await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
-          await sub.unsubscribe()
+        // Disable — delete FCM token then remove from DB
+        const messaging = await messagingPromise
+        if (messaging) {
+          try { await deleteToken(messaging) } catch { /* already gone */ }
         }
+        await supabase.from('push_subscriptions').delete().eq('user_id', user.id)
         setEnabled(false)
       } else {
+        // Enable — request permission, get Firebase FCM token, save to DB
         const permission = await requestNotificationPermission()
         if (permission === 'denied') { setPermissionDenied(true); return }
         if (permission !== 'granted') return
 
         setPermissionDenied(false)
-        const reg = await navigator.serviceWorker.ready
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+
+        const messaging = await messagingPromise
+        if (!messaging) throw new Error('Firebase Messaging not supported in this browser')
+
+        const reg   = await navigator.serviceWorker.ready
+        const token = await getToken(messaging, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: reg,
         })
-        const json = sub.toJSON()
+
+        if (!token) throw new Error('Failed to get FCM token')
+
         await supabase.from('push_subscriptions').upsert({
           household_id: household.id,
           user_id:      user.id,
-          endpoint:     sub.endpoint,
-          p256dh:       json.keys!.p256dh,
-          auth:         json.keys!.auth,
+          endpoint:     token,   // FCM registration token stored here
+          p256dh:       'fcm',   // marker — distinguishes from web-push subscriptions
+          auth:         'fcm',
         }, { onConflict: 'user_id,endpoint' })
+
         setEnabled(true)
       }
     } catch (e) {
@@ -127,7 +130,7 @@ export function usePushNotifications() {
     }
   }, [enabled, user, household])
 
-  // ── Test via SW waitUntil ───────────────────────────────────────
+  // ── Test via SW ─────────────────────────────────────────────────
 
   const scheduleTest = useCallback(async (minutes = 1) => {
     if (getNotificationPermission() !== 'granted') {
