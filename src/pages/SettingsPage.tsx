@@ -307,10 +307,19 @@ export default function SettingsPage() {
                   SW: {swStatus === 'active' ? '✓ active' : swStatus === 'inactive' ? '✗ not active' : '…'}
                 </p>
                 <button
-                  onClick={() => scheduleTest(1/12)}
+                  onClick={async () => {
+                    const reg = await navigator.serviceWorker.ready
+                    reg.showNotification('Direct test', { body: 'Called from page, not SW' })
+                  }}
                   className="text-xs text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Send test notification in 5 sec
+                  Direct notify (instant)
+                </button>
+                <button
+                  onClick={() => scheduleTest(1/12)}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors block"
+                >
+                  SW notify (5 sec delay)
                 </button>
               </div>
             )}
