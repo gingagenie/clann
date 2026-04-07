@@ -103,18 +103,33 @@ export function usePushNotifications() {
         await supabase.from('push_subscriptions').delete().eq('user_id', user.id)
         setEnabled(false)
       } else {
-        // Enable — request permission, get Firebase FCM token, save to DB
+        setPermissionDenied(false)
+
+        // ── Native app shell (React Native WebView) ──────────────
+        // The shell handles push registration natively via expo-notifications.
+        // We post a message and wait for the token to come back via CustomEvent.
+        if ((window as any).__isNativeApp) {
+          await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('Native push registration timed out')), 15000)
+            window.addEventListener('nativePushRegistered', () => {
+              clearTimeout(timeout)
+              resolve()
+            }, { once: true })
+            ;(window as any).ReactNativeWebView?.postMessage(JSON.stringify({
+              type: 'REGISTER_PUSH',
+              userId: user.id,
+              householdId: household.id,
+            }))
+          })
+          setEnabled(true)
+          return
+        }
+
+        // ── Web / TWA path (Firebase web SDK) ────────────────────
         const permission = await requestNotificationPermission()
         if (permission === 'denied') { setPermissionDenied(true); return }
         if (permission !== 'granted') return
 
-        setPermissionDenied(false)
-
-        // TWA bug: Notification.requestPermission() returns 'granted' but the
-        // Notification.permission property still reads 'denied' because Bubblewrap's
-        // WebView doesn't sync the Android grant back to the web API.
-        // Firebase's getToken() checks Notification.permission directly and throws
-        // messaging/permission-blocked. Patch the getter so it reflects the grant.
         if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
           try {
             Object.defineProperty(window.Notification, 'permission', {
@@ -128,7 +143,7 @@ export function usePushNotifications() {
 
         const messaging = await messagingPromise
         if (!messaging) {
-          const msg = 'Firebase Messaging not supported (messaging is null) — serviceWorker=' +
+          const msg = 'Firebase Messaging not supported — serviceWorker=' +
             ('serviceWorker' in navigator) + ' PushManager=' + ('PushManager' in window)
           setLastError(msg)
           throw new Error(msg)
@@ -145,10 +160,7 @@ export function usePushNotifications() {
 
         let token: string
         try {
-          token = await getToken(messaging, {
-            vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: reg,
-          })
+          token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg })
         } catch (e: any) {
           const msg = 'getToken failed: ' + (e?.message ?? String(e)) + (e?.code ? ' [' + e.code + ']' : '')
           setLastError(msg)
@@ -164,8 +176,8 @@ export function usePushNotifications() {
         const { error: upsertError } = await supabase.from('push_subscriptions').upsert({
           household_id: household.id,
           user_id:      user.id,
-          endpoint:     token,   // FCM registration token stored here
-          p256dh:       'fcm',   // marker — distinguishes from web-push subscriptions
+          endpoint:     token,
+          p256dh:       'fcm',
           auth:         'fcm',
         }, { onConflict: 'user_id,endpoint' })
 
