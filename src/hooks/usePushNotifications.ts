@@ -155,13 +155,19 @@ export function usePushNotifications() {
           throw new Error(msg)
         }
 
-        await supabase.from('push_subscriptions').upsert({
+        const { error: upsertError } = await supabase.from('push_subscriptions').upsert({
           household_id: household.id,
           user_id:      user.id,
           endpoint:     token,   // FCM registration token stored here
           p256dh:       'fcm',   // marker — distinguishes from web-push subscriptions
           auth:         'fcm',
         }, { onConflict: 'user_id,endpoint' })
+
+        if (upsertError) {
+          const msg = 'DB upsert failed: ' + upsertError.message
+          setLastError(msg)
+          throw new Error(msg)
+        }
 
         setEnabled(true)
       }
