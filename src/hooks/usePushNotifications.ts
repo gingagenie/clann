@@ -31,6 +31,7 @@ export function usePushNotifications() {
   const [loading,          setLoading]          = useState(false)
   const [supported,        setSupported]        = useState(false)
   const [permissionDenied, setPermissionDenied] = useState(false)
+  const [lastError,        setLastError]        = useState<string | null>(null)
 
   useEffect(() => {
     const ok = typeof window !== 'undefined'
@@ -85,6 +86,7 @@ export function usePushNotifications() {
   const toggle = useCallback(async () => {
     if (!user || !household) return
     setLoading(true)
+    setLastError(null)
     try {
       if (enabled) {
         // Disable — delete FCM token then remove from DB
@@ -103,15 +105,39 @@ export function usePushNotifications() {
         setPermissionDenied(false)
 
         const messaging = await messagingPromise
-        if (!messaging) throw new Error('Firebase Messaging not supported (messaging is null)')
+        if (!messaging) {
+          const msg = 'Firebase Messaging not supported (messaging is null) — serviceWorker=' +
+            ('serviceWorker' in navigator) + ' PushManager=' + ('PushManager' in window)
+          setLastError(msg)
+          throw new Error(msg)
+        }
 
-        const reg   = await navigator.serviceWorker.ready
-        const token = await getToken(messaging, {
-          vapidKey: VAPID_KEY,
-          serviceWorkerRegistration: reg,
-        })
+        let reg: ServiceWorkerRegistration
+        try {
+          reg = await navigator.serviceWorker.ready
+        } catch (e: any) {
+          const msg = 'serviceWorker.ready failed: ' + (e?.message ?? String(e))
+          setLastError(msg)
+          throw new Error(msg)
+        }
 
-        if (!token) throw new Error('Failed to get FCM token')
+        let token: string
+        try {
+          token = await getToken(messaging, {
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: reg,
+          })
+        } catch (e: any) {
+          const msg = 'getToken failed: ' + (e?.message ?? String(e)) + (e?.code ? ' [' + e.code + ']' : '')
+          setLastError(msg)
+          throw new Error(msg)
+        }
+
+        if (!token) {
+          const msg = 'getToken returned empty string'
+          setLastError(msg)
+          throw new Error(msg)
+        }
 
         await supabase.from('push_subscriptions').upsert({
           household_id: household.id,
@@ -123,8 +149,9 @@ export function usePushNotifications() {
 
         setEnabled(true)
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('[usePushNotifications] toggle error:', e)
+      if (!lastError) setLastError(e?.message ?? String(e))
     } finally {
       setLoading(false)
     }
@@ -141,5 +168,5 @@ export function usePushNotifications() {
     reg.active?.postMessage({ type: 'SCHEDULE_TEST', delayMs: minutes * 60_000 })
   }, [])
 
-  return { enabled, loading, supported, permissionDenied, toggle, scheduleTest }
+  return { enabled, loading, supported, permissionDenied, lastError, toggle, scheduleTest }
 }
