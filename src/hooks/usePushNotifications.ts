@@ -32,6 +32,7 @@ export function usePushNotifications() {
   const [supported,        setSupported]        = useState(false)
   const [permissionDenied, setPermissionDenied] = useState(false)
   const [lastError,        setLastError]        = useState<string | null>(null)
+  const [swStatus,         setSwStatus]         = useState<'unknown' | 'active' | 'inactive'>('unknown')
 
   useEffect(() => {
     const ok = typeof window !== 'undefined'
@@ -39,6 +40,11 @@ export function usePushNotifications() {
       && 'PushManager' in window
     setSupported(ok)
     if (ok && user?.id) void checkStatus()
+    if (ok) {
+      navigator.serviceWorker.ready.then(reg => {
+        setSwStatus(reg.active ? 'active' : 'inactive')
+      }).catch(() => setSwStatus('inactive'))
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
@@ -195,5 +201,5 @@ export function usePushNotifications() {
     reg.active.postMessage({ type: 'SCHEDULE_TEST', delayMs: minutes * 60_000 })
   }, [])
 
-  return { enabled, loading, supported, permissionDenied, lastError, toggle, scheduleTest }
+  return { enabled, loading, supported, permissionDenied, lastError, swStatus, toggle, scheduleTest }
 }

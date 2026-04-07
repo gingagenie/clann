@@ -28,7 +28,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function SettingsPage() {
   const { user, signOut }                       = useAuth()
   const { household, members, updateHousehold, refresh } = useHousehold()
-  const { enabled, loading, supported, permissionDenied, lastError, toggle, scheduleTest } = usePushNotifications()
+  const { enabled, loading, supported, permissionDenied, lastError, swStatus, toggle, scheduleTest } = usePushNotifications()
   const { canInstall, isIOSSafari, isInstalled, install } = usePWAInstall()
 
   const [copied, setCopied] = useState(false)
@@ -302,7 +302,10 @@ export default function SettingsPage() {
               </div>
             )}
             {enabled && (
-              <div className="px-4 pb-3">
+              <div className="px-4 pb-3 space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  SW: {swStatus === 'active' ? '✓ active' : swStatus === 'inactive' ? '✗ not active' : '…'}
+                </p>
                 <button
                   onClick={() => scheduleTest(1/12)}
                   className="text-xs text-muted-foreground hover:text-primary transition-colors"
