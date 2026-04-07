@@ -17,14 +17,19 @@ registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')))
 // Fired by the Supabase Edge Function send-dinner-reminder at 5pm daily
 
 self.addEventListener('push', event => {
-  if (!event.data) return
-  let raw: Record<string, unknown> = {}
-  try { raw = event.data.json() as Record<string, unknown> } catch { return }
+  let title = 'Clann'
+  let body  = 'You have a new notification'
+  let url   = '/'
 
-  // Support our custom format { title, body, url } and Firebase data message format
-  const title = (raw.title ?? (raw.notification as Record<string, unknown>)?.title ?? 'Clann') as string
-  const body  = (raw.body  ?? (raw.notification as Record<string, unknown>)?.body  ?? '') as string
-  const url   = (raw.url   ?? '/tasks') as string
+  if (event.data) {
+    try {
+      const raw = event.data.json() as Record<string, unknown>
+      const n   = raw.notification as Record<string, unknown> | undefined
+      title = (raw.title ?? n?.title ?? title) as string
+      body  = (raw.body  ?? n?.body  ?? body)  as string
+      url   = (raw.url   ?? url) as string
+    } catch { /* non-JSON payload — use fallback text */ }
+  }
 
   event.waitUntil(
     self.registration.showNotification(title, {
