@@ -182,12 +182,17 @@ export function usePushNotifications() {
   // ── Test via SW ─────────────────────────────────────────────────
 
   const scheduleTest = useCallback(async (minutes = 1) => {
-    if (getNotificationPermission() !== 'granted') {
-      const perm = await requestNotificationPermission()
-      if (perm !== 'granted') return
+    const perm = getNotificationPermission()
+    if (perm !== 'granted') {
+      const requested = await requestNotificationPermission()
+      if (requested !== 'granted') return
     }
     const reg = await navigator.serviceWorker.ready
-    reg.active?.postMessage({ type: 'SCHEDULE_TEST', delayMs: minutes * 60_000 })
+    if (!reg.active) {
+      console.warn('[scheduleTest] SW not active — cannot post message')
+      return
+    }
+    reg.active.postMessage({ type: 'SCHEDULE_TEST', delayMs: minutes * 60_000 })
   }, [])
 
   return { enabled, loading, supported, permissionDenied, lastError, toggle, scheduleTest }

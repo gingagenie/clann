@@ -9,6 +9,10 @@ declare const self: ServiceWorkerGlobalScope & {
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
 
+// Activate immediately — don't wait for existing clients to close
+self.addEventListener('install',  () => self.skipWaiting())
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()))
+
 // SPA fallback — serve index.html for all navigation requests so
 // refreshing at /shopping, /meals etc. doesn't return a 404
 registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')))
