@@ -104,6 +104,22 @@ export function usePushNotifications() {
 
         setPermissionDenied(false)
 
+        // TWA bug: Notification.requestPermission() returns 'granted' but the
+        // Notification.permission property still reads 'denied' because Bubblewrap's
+        // WebView doesn't sync the Android grant back to the web API.
+        // Firebase's getToken() checks Notification.permission directly and throws
+        // messaging/permission-blocked. Patch the getter so it reflects the grant.
+        if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+          try {
+            Object.defineProperty(window.Notification, 'permission', {
+              get: () => 'granted' as NotificationPermission,
+              configurable: true,
+            })
+          } catch (e) {
+            console.warn('[TWA] could not patch Notification.permission:', e)
+          }
+        }
+
         const messaging = await messagingPromise
         if (!messaging) {
           const msg = 'Firebase Messaging not supported (messaging is null) — serviceWorker=' +
