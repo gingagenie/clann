@@ -103,7 +103,7 @@ export function usePushNotifications() {
         setPermissionDenied(false)
 
         const messaging = await messagingPromise
-        if (!messaging) throw new Error('Firebase Messaging not supported in this browser')
+        if (!messaging) throw new Error('Firebase Messaging not supported (messaging is null)')
 
         const reg   = await navigator.serviceWorker.ready
         const token = await getToken(messaging, {
