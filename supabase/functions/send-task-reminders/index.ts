@@ -110,7 +110,7 @@ async function sendFcm(
           data:    { title, body, url },
           webpush: {
             headers:      { Urgency: 'high' },
-            notification: { title, body, icon: '/icons/icon-192.png' },
+            notification: { title, body, icon: 'https://clann.onrender.com/icons/icon-192.png' },
           },
         },
       }),

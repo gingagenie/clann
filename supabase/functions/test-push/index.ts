@@ -90,7 +90,7 @@ Deno.serve(async () => {
             data: { title: 'Test notification', body: 'Firebase is working!', url: '/tasks' },
             webpush: {
               headers:      { Urgency: 'high' },
-              notification: { title: 'Test notification', body: 'Firebase is working!', icon: '/icons/icon-192.png' },
+              notification: { title: 'Test notification', body: 'Firebase is working!', icon: 'https://clann.onrender.com/icons/icon-192.png' },
             },
           },
         }),
