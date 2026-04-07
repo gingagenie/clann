@@ -115,7 +115,24 @@ export function usePushNotifications() {
         if (isNative) {
           await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error('Timed out — no response from native layer')), 15000)
-            window.addEventListener('nativePushRegistered', () => { clearTimeout(timeout); resolve() }, { once: true })
+            window.addEventListener('nativePushRegistered', async (e: any) => {
+              clearTimeout(timeout)
+              try {
+                const token = e.detail?.token
+                if (!token) throw new Error('No token in event')
+                const { error } = await supabase.from('push_subscriptions').upsert({
+                  household_id: household.id,
+                  user_id:      user.id,
+                  endpoint:     token,
+                  p256dh:       'fcm',
+                  auth:         'fcm',
+                }, { onConflict: 'user_id,endpoint' })
+                if (error) throw new Error(error.message)
+                resolve()
+              } catch (err: any) {
+                reject(err)
+              }
+            }, { once: true })
             window.addEventListener('nativePushError', (e: any) => { clearTimeout(timeout); reject(new Error('Native error: ' + (e.detail ?? 'unknown'))) }, { once: true })
             ;(window as any).ReactNativeWebView?.postMessage(JSON.stringify({
               type: 'REGISTER_PUSH',
