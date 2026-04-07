@@ -304,10 +304,10 @@ export default function SettingsPage() {
             {enabled && (
               <div className="px-4 pb-3">
                 <button
-                  onClick={() => scheduleTest(1)}
+                  onClick={() => scheduleTest(1/12)}
                   className="text-xs text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Send test notification in 1 min
+                  Send test notification in 5 sec
                 </button>
               </div>
             )}
