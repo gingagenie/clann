@@ -236,8 +236,10 @@ Deno.serve(async () => {
       } catch (e: any) {
         console.error('[send] push failed:', e?.statusCode ?? e?.message)
         failed++
-        if (e?.statusCode === 410 || e?.statusCode === 404) {
+        // Remove on HTTP 404/410 (expired token) or local validation errors (bad key data)
+        if (e?.statusCode === 410 || e?.statusCode === 404 || !e?.statusCode) {
           await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint)
+          console.log('[send] Removed bad subscription:', endpoint.slice(0, 30))
         }
       }
     }
