@@ -35,7 +35,7 @@ export function usePushNotifications() {
   const [swStatus,         setSwStatus]         = useState<'unknown' | 'active' | 'inactive'>('unknown')
 
   useEffect(() => {
-    const isNative = typeof window !== 'undefined' && !!(window as any).__isNativeApp
+    const isNative = typeof window !== 'undefined' && (!!(window as any).__isNativeApp || !!(window as any).ReactNativeWebView)
     const ok = isNative || (
       typeof window !== 'undefined'
       && 'serviceWorker' in navigator
@@ -111,7 +111,8 @@ export function usePushNotifications() {
         // ── Native app shell (React Native WebView) ──────────────
         // The shell handles push registration natively via expo-notifications.
         // We post a message and wait for the token to come back via CustomEvent.
-        if ((window as any).__isNativeApp) {
+        const isNative = !!(window as any).__isNativeApp || !!(window as any).ReactNativeWebView
+        if (isNative) {
           await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => reject(new Error('Native push registration timed out')), 15000)
             window.addEventListener('nativePushRegistered', () => {
