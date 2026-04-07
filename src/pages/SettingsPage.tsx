@@ -301,27 +301,11 @@ export default function SettingsPage() {
                 </p>
               </div>
             )}
-            {enabled && (
+            {enabled && !(window as any).__isNativeApp && (
               <div className="px-4 pb-3 space-y-1">
                 <p className="text-xs text-muted-foreground">
                   SW: {swStatus === 'active' ? '✓ active' : swStatus === 'inactive' ? '✗ not active' : '…'}
                 </p>
-                <button
-                  onClick={async () => {
-                    try {
-                      const perm = typeof Notification !== 'undefined' ? Notification.permission : 'undefined'
-                      const reg = await navigator.serviceWorker.ready
-                      await reg.showNotification('Direct test', { body: `perm=${perm}` })
-                      alert('OK — perm=' + perm)
-                    } catch (e: any) {
-                      const perm = typeof Notification !== 'undefined' ? Notification.permission : 'undefined'
-                      alert('FAILED: ' + (e?.message ?? String(e)) + ' | perm=' + perm)
-                    }
-                  }}
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Direct notify (instant)
-                </button>
                 <button
                   onClick={() => scheduleTest(1/12)}
                   className="text-xs text-muted-foreground hover:text-primary transition-colors block"
