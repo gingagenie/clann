@@ -158,7 +158,10 @@
   }
 }
 
-/* Safe area utility for bottom nav on iOS */
+/* Safe area utility for bottom nav on iOS / Android WebView.
+   In the native React Native shell, SafeAreaView handles the inset at the
+   container level, so we inject --native-safe-area-bottom: 0px to prevent
+   double-counting. In a plain browser env() applies as normal. */
 .safe-area-pb {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: var(--native-safe-area-bottom, env(safe-area-inset-bottom, 0px));
 }
